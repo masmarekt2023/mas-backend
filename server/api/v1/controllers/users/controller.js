@@ -91,8 +91,43 @@ const commonFunction = require("../../../../helper/util");
 const fs = require("fs");
 const status = require("../../../../enums/status");
 const userType = require("../../../../enums/userType");
+const {request} = require("express");
 
 class userController {
+  /**
+   * @swagger
+   * /user/sendOtpRegister:
+   *   put:
+   *     tags:
+   *       - USER
+   *     description: sendOtpRegister
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: email
+   *         description: user email
+   *         in: body
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
+  async sendOtpRegister(req, res, next) {
+    const validationSchema = {
+      email: Joi.string().required(),
+    };
+    try {
+      const { email } = await Joi.validate(req.body, validationSchema);
+      const verify = await Twilio.sendVerification(email, 'email', 'register', "")
+
+      if(verify.status !== 'pending'){
+        return res.json(new response({verification_sent:{email:false}}, "Verification email Service Error", 403));
+      }
+      return res.json(new response({otp:'sent'}, responseMessage.OTP_SEND));
+    } catch (error) {
+      return next(error);
+    }
+  }
 
   /**
    * @swagger
@@ -120,6 +155,7 @@ class userController {
       email: Joi.string().email().required(),
       phone: Joi.string().allow(null,'').optional(),
       password: Joi.string().required(),
+      otp: Joi.string().length(6).required(),
       referralCode: Joi.string().allow(null,'').optional(),
     };
     try {
@@ -129,7 +165,7 @@ class userController {
         req.body,
         validationSchema
       );
-      const { userName, password, email, phone, referralCode } = validatedBody;
+      const { userName, password, email, phone, referralCode, otp } = validatedBody;
 
       var adminResult = await findUser({ userType: userType.ADMIN });
       
@@ -155,6 +191,7 @@ class userController {
       let userETHWallet = commonFunction.generateETHWallet();
 
       var obj = {
+        name: userName,
         userName: userName,
         email: email,
         phone: phone,
@@ -206,24 +243,32 @@ class userController {
         }
       }
 
-      const verifyEmail = await Twilio.sendVerification(email,'email', 'register', userName);
+      const verify = await Twilio.checkVerification(email, otp);
+      if(verify.status === 'pending' || !verify?.valid){
+        return res.json(new response({verified:false}, "Code expired or invalid", 404));
+      }
+      if(verify?.valid){
+        obj.emailVerification = true;
+      }
+
+      /*const verifyEmail = await Twilio.sendVerification(email,'email', 'register', userName);
       console.log("verifyEmail",verifyEmail)
       if(verifyEmail.status == 400){
         return res.json(new response({email_verification_sent:false}, "Email invalid", 400));
       }
       if(verifyEmail.status == 403){
         return res.json(new response({email_verification_sent:false}, "Email Verification Servive Unavailable", 403));
-      }
+      }*/
 
       /****** ATTENTION THIS PART WILL BE ACTIVATED ANYTIME SOON */
-      const verifyPhone = await Twilio.sendVerification(phone,'sms');
+      /*const verifyPhone = await Twilio.sendVerification(phone,'sms');
        console.log("verifyPhone",verifyPhone)
        if(verifyPhone.status == 400){
        return res.json(new response({phone_verification_sent:false}, "Phone number invalid", 400));
        }
        if(verifyPhone.status == 403){
         return res.json(new response({phone_verification_sent:false}, "SMS Verification Servive Unavailable", 403));
-       }
+       }*/
 
       result = await createUser(obj);
       let token = await commonFunction.getToken({
@@ -346,15 +391,16 @@ class userController {
       
       const to = (channel === "email") ? userResult.email : userResult.phone
       const verify = await Twilio.checkVerification(to, otp);
+      console.log(verify);
       if(verify.status == "400"){
         return res.json(new response({verified:false}, "Email invalid", 400));
       }
-      if(verify.status == "404"){
+      if(verify.status === 'pending' || !verify?.valid){
         return res.json(new response({verified:false}, "Code expired or invalid", 404));
       }
       
       if(verify?.valid || verify.status == "approved"){
-        if(context === "register" || context === 'verifyLater'){
+        if(context === 'verifyLater'){
           if(channel === "email") userResult.emailVerification = true;
           if(channel === "sms") userResult.phoneVerification = true;
           await userResult.save();  
@@ -1020,9 +1066,10 @@ class userController {
    */
   async updateProfile(req, res, next) {
     try {
+      console.log(req.body);
       let validatedBody = req.body;
 
-      if (validatedBody.profilePic) {
+      if (validatedBody.profilePic) {;
         validatedBody.profilePic = await commonFunction.getSecureUrl(
           validatedBody.profilePic
         );
@@ -1038,6 +1085,29 @@ class userController {
       }
       validatedBody.isUpdated = true;
        
+      let updated = await updateUserById(userResult._id, validatedBody);
+      return res.json(new response(updated, responseMessage.PROFILE_UPDATED));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async updateProfilePhone(req, res, next) {
+    try {
+      const profilePic = req.files.find(i => i?.fieldname === "profilePicFile")?.path;
+      const coverPic = req.files.find(i => i?.fieldname === "coverPicFile")?.path;
+      let validatedBody = req.body;
+
+      profilePic ? validatedBody.profilePic = await commonFunction.getFileUrlOnPhone(profilePic) : null;
+
+      coverPic ? validatedBody.coverPic = await commonFunction.getFileUrlOnPhone(coverPic) : null;
+
+      let userResult = await findUser({ _id: req.userId });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      validatedBody.isUpdated = true;
+
       let updated = await updateUserById(userResult._id, validatedBody);
       return res.json(new response(updated, responseMessage.PROFILE_UPDATED));
     } catch (error) {
