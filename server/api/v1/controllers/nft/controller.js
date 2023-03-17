@@ -460,29 +460,6 @@ class nftController {
     }
   }
 
-  async createNFTPhone(req, res, next) {
-    try {
-      const validatedBody = req.body;
-      let userResult = await findUserData({ _id: req.userId });
-      if (!userResult) {
-        return apiError.notFound(responseMessage.USER_NOT_FOUND);
-      }
-      validatedBody.mediaUrl = await commonFunction.getFileUrlOnPhone(req.body.file);
-      validatedBody.userId = userResult._id;
-      var result = await createNft(validatedBody);
-      let mesage = `A new bundle (${validatedBody.bundleName}) has been created by ${userResult.name}, with the donation amount of ${validatedBody.donationAmount} ${validatedBody.coinName} for ${validatedBody.duration}.`;
-      notificattionToAllSubscriber(
-          userResult.followers,
-          mesage,
-          validatedBody.mediaUrl
-      );
-      return res.json(new response(result, responseMessage.NFT_ADDED));
-    } catch (error) {
-      console.log("in");
-      return next(error);
-    }
-  }
-
   /**
    * @swagger
    * /nft/nft/{_id}:
@@ -638,6 +615,9 @@ class nftController {
       let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      if(req.files) {
+        validatedBody.mediaUrl = await commonFunction.getImageUrl(req.files);
       }
       var nftResult = await findNft({
         _id: validatedBody._id,
