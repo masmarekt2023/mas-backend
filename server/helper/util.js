@@ -44,9 +44,10 @@ module.exports = {
     return result.secure_url;
   },
 
-  getFileUrlOnPhone: async (file) => {
-    console.log(file);
-    var result = await cloudinary.v2.uploader.upload(file.uri);
+  getFileUrlOnPhone: async (path) => {
+    var result = await cloudinary.v2.uploader.upload(path, {
+      resource_type: "auto",
+    });
     return result.secure_url;
   },
 
