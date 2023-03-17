@@ -2,42 +2,35 @@ const config = require("config");
 let twilio = config.get("twilio");
 
 const client = require('twilio')(twilio.account_sid, twilio.auth_token);
-const VerificationServiceId = 'VA297d1cee78ad4c273e047fe8d86e4581';
+const image = "https://www.masplatform.net/images/logo.png";
+const VerificationServiceId = twilio.verifySid;
 module.exports = {
-    sendVerification: async (to, channel, context = 'register', username='there') => {
+    sendVerification: async (to, channel, context = 'register', username = 'there') => {
+        const subject = context === "withdraw" ? "Confirm Withdraw" : context === "reset_password" ? "Reset Password" : "Register";
         let payload = {to: to, channel: channel}
-        if(channel === 'email' && context === 'withdraw'){
-            payload = {channelConfiguration: {
-                template_id: 'd-d2e292a1468f48caa048ae315245772b', //sendgrid dynamic template id
-                substitutions: {
-                    username: username,
-                    context:  'Confirm Withdraw'
-                }
-              }, to: to, channel: channel}
-        }
-        if(channel === 'email' && context === 'reset_password'){
-            payload = {channelConfiguration: {
-                template_id: 'd-d2e292a1468f48caa048ae315245772b',
-                substitutions: {
-                    username: username,
-                    context:  'Reset Password'
-                }
-              }, to: to, channel: channel} 
+        if (channel === 'email') {
+            payload = {
+                channelConfiguration: {
+                    template_id: twilio.template_id, //sendgrid dynamic template id
+                    substitutions: {
+                        context: subject, image: image,
+                    }
+                }, to: to, channel: channel
+            }
         }
         try {
             return await client.verify.v2.services(VerificationServiceId)
-            .verifications
-            .create(payload)
+                .verifications
+                .create(payload)
         } catch (error) {
-            return error ;
+            return error;
         }
-    },
-    checkVerification: async (to, otp) => {
+    }, checkVerification: async (to, otp) => {
         try {
-            console.log(to,otp);
+            console.log(to, otp);
             return await client.verify.v2.services(VerificationServiceId)
-            .verificationChecks
-            .create({to: to, code: otp});
+                .verificationChecks
+                .create({to: to, code: otp});
         } catch (error) {
             return error;
         }
