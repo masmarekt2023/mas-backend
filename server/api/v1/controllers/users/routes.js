@@ -28,7 +28,6 @@ module.exports = Express.Router()
     .get("/nftTransactionList", controller.nftTransactionList)
     .get("/myTransactionHistory", controller.myTransactionHistory)
     .get("/userAllDetails/:_id", controller.userAllDetails)
-    .put("/updateProfile", controller.updateProfile)
     .get("/subscribeNow/:nftId", controller.subscribeNow)
     .get("/followProfile/:userId", controller.followProfile)
     .get("/profileFollowersList", controller.profileFollowersList)
@@ -65,4 +64,4 @@ module.exports = Express.Router()
 
     .use(upload.uploadFile)
     .post("/shareWithAudience", controller.shareWithAudience)
-    .put("/updateProfilePhone", controller.updateProfilePhone);
+    .put("/updateProfile", controller.updateProfile);
