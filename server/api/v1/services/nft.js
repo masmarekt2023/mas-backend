@@ -260,7 +260,7 @@ const nftServices = {
   listAllNft: async (validatedBody) => {
     let activeIds = await getActiveUser();
     let query = { status: { $ne: status.DELETE }, userId: { $in: activeIds } };
-    const { search } = validatedBody;
+    const { search, page, limit } = validatedBody;
     if (search) {
       query.$or = [
         { tokenId: { $regex: search, $options: "i" } },
@@ -270,10 +270,13 @@ const nftServices = {
         { tokenName: { $regex: search, $options: "i" } },
       ];
     }
-    return await nftModel
-      .find(query)
-      .populate({ path: "userId", select: "-ethAccount.privateKey" })
-      .sort({ createdAt: -1 });
+    const options = {
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
+      sort: { createdAt: -1 },
+      populate: { path: "userId", select: "-ethAccount.privateKey" }
+    };
+    return await nftModel.paginate(query, options);
   },
 
   nftListWithAggregatePipeline: async (validatedBody, userId) => {

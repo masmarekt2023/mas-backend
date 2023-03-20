@@ -791,6 +791,8 @@ class nftController {
   async listAllNft(req, res, next) {
     const validationSchema = {
       search: Joi.string().optional(),
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
     };
     try {
       const validatedBody = await Joi.validate(req.query, validationSchema);
