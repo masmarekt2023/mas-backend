@@ -9,6 +9,7 @@ const chat = require("./api/v1/controllers/chat/routes");
 const plan = require("./api/v1/controllers/plan/routes");
 const blockchain = require("./api/v1/controllers/blockchain/routes");
 const content = require("./api/v1/controllers/content/routes");
+const story = require("./api/v1/controllers/story/routes");
 
 module.exports = function routes(app) {
   app.use("/api/v1/user", user);
@@ -22,6 +23,7 @@ module.exports = function routes(app) {
   app.use("/api/v1/plan", plan);
   app.use("/api/v1/blockchain", blockchain);
   app.use("/api/v1/content", content);
+  app.use("/api/v1/story", story);
 
   return app;
 };
