@@ -5,7 +5,9 @@ const auth = require("../../../../helper/auth");
 
 module.exports = Express.Router()
   .use(auth.verifyToken)
-  .get("", controller.getStories)
-  .delete("", controller.deleteStory)
+  .get("/:userId", controller.getStories)
+  .delete("/:storyId", controller.deleteStory)
+  .put("/likeDislikeStory/:storyId", controller.likeDislikeStory)
+  .put("/watchStory/:storyId", controller.watchStory)
   .use(upload.uploadFile)
   .post("", controller.creatStory);

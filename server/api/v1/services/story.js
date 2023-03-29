@@ -15,7 +15,13 @@ const storyServices = {
 
   findStories: async (query) => {
     return await storyModel.find(query);
-  }
+  },
+
+  updateStory: async (query, updateObj) => {
+    return await storyModel
+      .findByIdAndUpdate(query, updateObj, { new: true })
+      .select("-ethAccount.privateKey -password -otp");
+  },
 };
 
 module.exports = { storyServices };

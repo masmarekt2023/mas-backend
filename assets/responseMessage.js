@@ -119,8 +119,10 @@ module.exports = {
   VIDEO_ADD: "Video added successfully",
   ADVERTISEMENT_ADD: "Advertisement added successfully",
   CREATE_STORY: "Successfully created story",
+  STORY_FOUND: "Found story successfully",
   STORY_NOT_FOUND: "Story not found",
   STORY_REMOVE: "Story removed successfully",
+  STORY_WATCH: "You have watch this story",
 
   SMS_BODY: (otp) => `Your verification code is  ${otp}`,
   INSUFFICIENT_BALANCE: (coin) =>

@@ -9,11 +9,16 @@ const options = {
 
 const { Schema } = Mongoose;
 
-const storyModel = new Schema({
-  userId: { type: String },
-  url: { type: String },
-  type: { type: String },
-}, options);
+const storyModel = new Schema(
+  {
+    userId: { type: String },
+    url: { type: String },
+    type: { type: String },
+    likeUsers: [],
+    watchUsers: [],
+  },
+  options
+);
 
 storyModel.plugin(mongoosePaginate);
 storyModel.plugin(mongooseAggregatePaginate);
