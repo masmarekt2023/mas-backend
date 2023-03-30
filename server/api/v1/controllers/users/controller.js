@@ -39,6 +39,7 @@ const {
   userSubscriberList,
   findUserWithSelect,
   allUsersList,
+  paginateSearch
 } = userServices;
 const {
   createSubscription,
@@ -755,6 +756,68 @@ class userController {
         return user.toObject()
      });
      result.docs = usersWithEarnings;
+      return res.json(new response(result, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  /**
+   * @swagger
+   * /user/searchUser:
+   *   get:
+   *     tags:
+   *       - USER
+   *     description: searchUser
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: search
+   *         description: search
+   *         in: query
+   *         required: false
+   *       - name: filter
+   *         description: items that search will filter with
+   *         in: query
+   *         required: false
+   *       - name: page
+   *         description: page
+   *         in: query
+   *         required: false
+   *       - name: limit
+   *         description: limit
+   *         in: query
+   *         required: false
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
+
+  async searchUser(req, res, next) {
+    const validationSchema = {
+      search: Joi.string().optional(),
+      filter: Joi.array().optional(),
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
+
+      const result = await paginateSearch(validatedBody);
+      const earnings = await earningList({});
+      const usersWithEarnings = result.docs.map(user => {
+        const index = earnings.findIndex(el => el.userId.toString() == user._id.toString());
+        if(index !== -1){
+          const { masBalance, busdBalance, usdtBalance, referralBalance }  = earnings[index]
+          return {
+            ...user.toObject(),
+            masBalance, busdBalance, usdtBalance, referralBalance
+          }
+
+        }
+        return user.toObject()
+      });
+      result.docs = usersWithEarnings;
       return res.json(new response(result, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);

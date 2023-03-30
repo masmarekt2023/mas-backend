@@ -133,30 +133,14 @@ const userServices = {
 
   paginateSearch: async (validatedBody) => {
     let query = { status: { $ne: status.DELETE } };
-    const { search, fromDate, toDate, page, limit } = validatedBody;
+    const { search, filter, page, limit } = validatedBody;
     if (search) {
-      query.$or = [
-        { firstName: { $regex: search, $options: "i" } },
-        { lastName: { $regex: search, $options: "i" } },
-        { email: { $regex: search, $options: "i" } },
-        { mobileNumber: { $regex: search, $options: "i" } },
-      ];
+      query.$or = filter.map(i => ({[`${i}`]: { $regex: search, $options: "i" }}));
     }
-    if (fromDate && !toDate) {
-      query.createdAt = { $gte: fromDate };
-    }
-    if (!fromDate && toDate) {
-      query.createdAt = { $lte: toDate };
-    }
-    if (fromDate && toDate) {
-      query.$and = [
-        { createdAt: { $gte: fromDate } },
-        { createdAt: { $lte: toDate } },
-      ];
-    }
+
     let options = {
       page: page || 1,
-      limit: limit || 15,
+      limit: limit || 10,
       sort: { createdAt: -1 },
       select:
         "-ethAccount.privateKey -password -referralCode -permissions -otp",

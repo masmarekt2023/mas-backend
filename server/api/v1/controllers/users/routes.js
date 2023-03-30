@@ -17,6 +17,7 @@ module.exports = Express.Router()
     .get("/getAdvertisement", controller.getAdvertisement)
     .get("/getBanner", controller.getBanner)
     .get("/allUserList", controller.allUserList)
+    .get("/searchUser/", controller.searchUser)
 
     .use(auth.verifyToken)
     .post("/verify-otp/", controller.verifyOtp)
