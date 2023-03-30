@@ -22,6 +22,7 @@ const {
   listAllNft,
   nftListWithAggregatePipeline,
   findNftWithPopulateDetails,
+  nftPaginateSearch
 } = nftServices;
 const {
   createNotification,
@@ -846,6 +847,61 @@ class nftController {
       return next(error);
     }
   }
+
+  /**
+   * @swagger
+   * /user/searchNft:
+   *   get:
+   *     tags:
+   *       - USER
+   *     description: searchNft
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: search
+   *         description: search
+   *         in: query
+   *         required: false
+   *       - name: filter
+   *         description: items that search will filter with
+   *         in: query
+   *         required: false
+   *       - name: page
+   *         description: page
+   *         in: query
+   *         required: false
+   *       - name: limit
+   *         description: limit
+   *         in: query
+   *         required: false
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
+  async searchNft(req, res, next) {
+    const validationSchema = {
+      search: Joi.string().optional(),
+      filter: Joi.array().optional(),
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
+      let userResult = await findUser({ _id: req.userId });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      let dataResults = await nftPaginateSearch(
+          validatedBody,
+          userResult._id,
+          userResult.subscribeNft
+      );
+      return res.json(new response(dataResults, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
 
   // /**
   //  * @swagger

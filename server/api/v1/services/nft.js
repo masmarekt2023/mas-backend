@@ -147,24 +147,12 @@ const nftServices = {
 
   nftPaginateSearch: async (validatedBody) => {
     let query = { status: { $ne: status.DELETE } };
-    const { search, fromDate, toDate, page, limit } = validatedBody;
+    const { search, filter, page, limit } = validatedBody;
     if (search) {
       query.$or = [
-        { name: { $regex: search, $options: "i" } },
-        { symbol: { $regex: search, $options: "i" } },
-        { categoryType: { $regex: search, $options: "i" } },
-      ];
-    }
-    if (fromDate && !toDate) {
-      query.createdAt = { $gte: fromDate };
-    }
-    if (!fromDate && toDate) {
-      query.createdAt = { $lte: toDate };
-    }
-    if (fromDate && toDate) {
-      query.$and = [
-        { createdAt: { $gte: fromDate } },
-        { createdAt: { $lte: toDate } },
+        { bundleTitle : { $regex: search, $options: "i" } },
+        { bundleName: { $regex: search, $options: "i" } },
+        { tokenName: { $regex: search, $options: "i" } },
       ];
     }
     let options = {

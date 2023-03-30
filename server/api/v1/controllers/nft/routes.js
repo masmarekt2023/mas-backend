@@ -23,6 +23,8 @@ module.exports = Express.Router()
     .put("/editNft", controller.editAuctionNft)
     .get("/myNftList", controller.myAuctionNftList)
 
+    .get('/searchNft', controller.searchNft)
+
     .use(upload.uploadFile)
     .put("/nft", controller.editNFT)
     .post("/nft", controller.createNFT)
