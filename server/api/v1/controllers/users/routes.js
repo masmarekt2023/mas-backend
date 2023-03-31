@@ -18,6 +18,7 @@ module.exports = Express.Router()
     .get("/getBanner", controller.getBanner)
     .get("/allUserList", controller.allUserList)
     .get("/searchUser/", controller.searchUser)
+    .get('/userNft/:userId', controller.userNft)
 
     .use(auth.verifyToken)
     .post("/verify-otp/", controller.verifyOtp)

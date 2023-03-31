@@ -39,7 +39,7 @@ const {
   userSubscriberList,
   findUserWithSelect,
   allUsersList,
-  paginateSearch
+  paginateSearch,
 } = userServices;
 const {
   createSubscription,
@@ -57,6 +57,7 @@ const {
   multiUpdateBundle,
   sharedBundleList,
   sharedBundleListPerticular,
+  findUserNft,
 } = nftServices;
 const {
   createAudience,
@@ -83,7 +84,8 @@ const { createDonation, findDonation, updateDonation, donationList } =
   donationServices;
 const { updateOrder } = orderServices;
 const { sortFee } = feeServices;
-const { createEarning, findEarning, updateEarning, earningList } = earningServices;
+const { createEarning, findEarning, updateEarning, earningList } =
+  earningServices;
 const { findReferral } = referralServices;
 const { findAdvertisements } = advertisementServices;
 const { findBanner } = bannerServices;
@@ -92,7 +94,7 @@ const commonFunction = require("../../../../helper/util");
 const fs = require("fs");
 const status = require("../../../../enums/status");
 const userType = require("../../../../enums/userType");
-const {request} = require("express");
+const { request } = require("express");
 
 class userController {
   /**
@@ -119,12 +121,23 @@ class userController {
     };
     try {
       const { email } = await Joi.validate(req.body, validationSchema);
-      const verify = await Twilio.sendVerification(email, 'email', 'register', "")
+      const verify = await Twilio.sendVerification(
+        email,
+        "email",
+        "register",
+        ""
+      );
 
-      if(verify.status !== 'pending'){
-        return res.json(new response({verification_sent:{email:false}}, "Verification email Service Error", 403));
+      if (verify.status !== "pending") {
+        return res.json(
+          new response(
+            { verification_sent: { email: false } },
+            "Verification email Service Error",
+            403
+          )
+        );
       }
-      return res.json(new response({otp:'sent'}, responseMessage.OTP_SEND));
+      return res.json(new response({ otp: "sent" }, responseMessage.OTP_SEND));
     } catch (error) {
       return next(error);
     }
@@ -154,39 +167,31 @@ class userController {
     const validationSchema = {
       userName: Joi.string().required(),
       email: Joi.string().email().required(),
-      phone: Joi.string().allow(null,'').optional(),
+      phone: Joi.string().allow(null, "").optional(),
       password: Joi.string().required(),
       otp: Joi.string().length(6).required(),
-      referralCode: Joi.string().allow(null,'').optional(),
+      referralCode: Joi.string().allow(null, "").optional(),
     };
     try {
       var result,
         firstCommission = {};
-      const validatedBody = await Joi.validate(
-        req.body,
-        validationSchema
-      );
-      const { userName, password, email, phone, referralCode, otp } = validatedBody;
+      const validatedBody = await Joi.validate(req.body, validationSchema);
+      const { userName, password, email, phone, referralCode, otp } =
+        validatedBody;
 
       var adminResult = await findUser({ userType: userType.ADMIN });
-      
+
       var userInfo = await findUser({
-        $or: [{ userName: userName }, { email: email }, { phone: phone }] ,
+        $or: [{ userName: userName }, { email: email }, { phone: phone }],
       });
       if (userInfo) {
         if (userInfo.email == email) {
-          return res.json(
-            apiError.conflict(responseMessage.EMAIL_EXIST)
-          );
+          return res.json(apiError.conflict(responseMessage.EMAIL_EXIST));
         }
         if (userInfo.phone == phone) {
-          return res.json(
-            apiError.conflict(responseMessage.MOBILE_EXIST)
-          );
+          return res.json(apiError.conflict(responseMessage.MOBILE_EXIST));
         }
-        return res.json(
-          apiError.conflict(responseMessage.USER_NAME_EXIST)
-        );
+        return res.json(apiError.conflict(responseMessage.USER_NAME_EXIST));
       }
 
       let userETHWallet = commonFunction.generateETHWallet();
@@ -248,10 +253,12 @@ class userController {
       }
 
       const verify = await Twilio.checkVerification(email, otp);
-      if(verify.status === 'pending' || !verify?.valid){
-        return res.json(new response({verified:false}, "Code expired or invalid", 404));
+      if (verify.status === "pending" || !verify?.valid) {
+        return res.json(
+          new response({ verified: false }, "Code expired or invalid", 404)
+        );
       }
-      if(verify?.valid){
+      if (verify?.valid) {
         obj.emailVerification = true;
       }
 
@@ -277,11 +284,18 @@ class userController {
       result = await createUser(obj);
       let token = await commonFunction.getToken({
         id: result._id,
-       email: result.email,
-       userType: result.userType,
+        email: result.email,
+        userType: result.userType,
       });
-     return res.json(
-       new response({ token: token, sms_verification_sent: true, email_verification_sent: true}, responseMessage.USER_CREATED)
+      return res.json(
+        new response(
+          {
+            token: token,
+            sms_verification_sent: true,
+            email_verification_sent: true,
+          },
+          responseMessage.USER_CREATED
+        )
       );
     } catch (error) {
       return next(error);
@@ -321,16 +335,18 @@ class userController {
       );
       var userResult = await findUser({ email: email });
       if (!userResult) {
-        return res.json(new response({},responseMessage.USER_NOT_FOUND));
+        return res.json(new response({}, responseMessage.USER_NOT_FOUND));
       }
-      
-      if (userResult.blockStatus === true) {
-        return res.status(403).json(new response({},responseMessage.LOGIN_NOT_ALLOWED));
 
+      if (userResult.blockStatus === true) {
+        return res
+          .status(403)
+          .json(new response({}, responseMessage.LOGIN_NOT_ALLOWED));
       }
       if (!bcrypt.compareSync(password, userResult.password)) {
-        return res.status(400).json(new response({},responseMessage.INCORRECT_LOGIN));
-
+        return res
+          .status(400)
+          .json(new response({}, responseMessage.INCORRECT_LOGIN));
       }
       token = await commonFunction.getToken({
         id: userResult._id,
@@ -343,9 +359,10 @@ class userController {
         token: token,
         isNewUser: userResult.isNewUser,
         isEmailVerified: userResult.emailVerification,
-        isPhoneVerified: userResult.phoneVerification
+        isPhoneVerified: userResult.phoneVerification,
       };
-      if (userResult.isNewUser) await updateUser({ _id: userResult._id }, { isNewUser: false });
+      if (userResult.isNewUser)
+        await updateUser({ _id: userResult._id }, { isNewUser: false });
       return res.json(new response(obj, responseMessage.LOGIN));
     } catch (error) {
       return next(error);
@@ -375,53 +392,75 @@ class userController {
   async verifyOtp(req, res, next) {
     const validationSchema = {
       otp: Joi.string().length(6).required(),
-      channel: Joi.string().allow(['email','sms']).required(),
-      context: Joi.string().allow(['register', 'verifyLater', 'withdraw']).required(),
+      channel: Joi.string().allow(["email", "sms"]).required(),
+      context: Joi.string()
+        .allow(["register", "verifyLater", "withdraw"])
+        .required(),
       txid: Joi.string().allow(null).optional(),
     };
     try {
-      const { otp, channel, context, txid } = await Joi.validate(req.body, validationSchema);
+      const { otp, channel, context, txid } = await Joi.validate(
+        req.body,
+        validationSchema
+      );
       let userResult = await findUserWithSelect({ _id: req.userId });
       if (!userResult) {
-        return res.json(new response(apiError.notFound(responseMessage.USER_NOT_FOUND)));
+        return res.json(
+          new response(apiError.notFound(responseMessage.USER_NOT_FOUND))
+        );
       }
       let tx;
-      if(context === 'withdraw'){
-        tx = await transactionServices.findTransaction({userId:req.userId, _id: txid });
+      if (context === "withdraw") {
+        tx = await transactionServices.findTransaction({
+          userId: req.userId,
+          _id: txid,
+        });
         if (!tx) {
-          return res.json(new response(apiError.notFound(responseMessage.DATA_NOT_FOUND)));
+          return res.json(
+            new response(apiError.notFound(responseMessage.DATA_NOT_FOUND))
+          );
         }
       }
-      
-      const to = (channel === "email") ? userResult.email : userResult.phone
+
+      const to = channel === "email" ? userResult.email : userResult.phone;
       const verify = await Twilio.checkVerification(to, otp);
       console.log(verify);
-      if(verify.status == "400"){
-        return res.json(new response({verified:false}, "Email invalid", 400));
+      if (verify.status == "400") {
+        return res.json(
+          new response({ verified: false }, "Email invalid", 400)
+        );
       }
-      if(verify.status === 'pending' || !verify?.valid){
-        return res.json(new response({verified:false}, "Code expired or invalid", 404));
+      if (verify.status === "pending" || !verify?.valid) {
+        return res.json(
+          new response({ verified: false }, "Code expired or invalid", 404)
+        );
       }
-      
-      if(verify?.valid || verify.status == "approved"){
-        if(context === 'verifyLater'){
-          if(channel === "email") userResult.emailVerification = true;
-          if(channel === "sms") userResult.phoneVerification = true;
-          await userResult.save();  
+
+      if (verify?.valid || verify.status == "approved") {
+        if (context === "verifyLater") {
+          if (channel === "email") userResult.emailVerification = true;
+          if (channel === "sms") userResult.phoneVerification = true;
+          await userResult.save();
         }
-        if(context === "withdraw"){
-          if(channel === "email") tx.email_security_verification = true;
-          if(channel === "sms") tx.sms_security_verification = true;
-          if(tx.email_security_verification){
+        if (context === "withdraw") {
+          if (channel === "email") tx.email_security_verification = true;
+          if (channel === "sms") tx.sms_security_verification = true;
+          if (tx.email_security_verification) {
             tx.transactionStatus = "APPROVED";
           }
           await tx.save();
         }
 
-        return res.json(new response({verified:verify?.valid}, responseMessage.OTP_VIRIFIED));
-      }  
-      return res.json(new response({verified:verify?.valid}, 'Code invalid', 400));
-      
+        return res.json(
+          new response(
+            { verified: verify?.valid },
+            responseMessage.OTP_VIRIFIED
+          )
+        );
+      }
+      return res.json(
+        new response({ verified: verify?.valid }, "Code invalid", 400)
+      );
     } catch (error) {
       return next(error);
     }
@@ -450,24 +489,46 @@ class userController {
   async resendOtp(req, res, next) {
     const validationSchema = {
       channel: Joi.string().required(),
-      context: Joi.string().allow(['register','verifyLater', 'withdraw']).required(),     
+      context: Joi.string()
+        .allow(["register", "verifyLater", "withdraw"])
+        .required(),
     };
     try {
-      const { channel, context } = await Joi.validate(req.body, validationSchema);
+      const { channel, context } = await Joi.validate(
+        req.body,
+        validationSchema
+      );
       let userResult = await findUserWithSelect({ _id: req.userId });
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      const to = (channel === "email") ? userResult.email : userResult.phone
-      const verify = await Twilio.sendVerification(to, channel, context, userResult.userName)
+      const to = channel === "email" ? userResult.email : userResult.phone;
+      const verify = await Twilio.sendVerification(
+        to,
+        channel,
+        context,
+        userResult.userName
+      );
 
-      if(verify.status == 400){
-        return res.json(new response({verification_sent:{[channel]:false}}, "Verification "+channel+" Error sending code to "+to, 400));
+      if (verify.status == 400) {
+        return res.json(
+          new response(
+            { verification_sent: { [channel]: false } },
+            "Verification " + channel + " Error sending code to " + to,
+            400
+          )
+        );
       }
-      if(verify.status == 403){
-        return res.json(new response({verification_sent:{[channel]:false}}, "Verification "+channel+" Service Error", 403));
+      if (verify.status == 403) {
+        return res.json(
+          new response(
+            { verification_sent: { [channel]: false } },
+            "Verification " + channel + " Service Error",
+            403
+          )
+        );
       }
-      return res.json(new response({otp:'sent'}, responseMessage.OTP_SEND));
+      return res.json(new response({ otp: "sent" }, responseMessage.OTP_SEND));
     } catch (error) {
       return next(error);
     }
@@ -505,46 +566,64 @@ class userController {
         return res.json(apiError.notFound(responseMessage.USER_NOT_FOUND));
       }
 
-      const verifyEmail = await Twilio.sendVerification(email,'email','reset_password', userResult.userName);
-      console.log("verifyEmail",verifyEmail)
-      if(verifyEmail.status == 400){
-        return res.json(new response({email_verification_sent:false}, "Email invalid", 400));
+      const verifyEmail = await Twilio.sendVerification(
+        email,
+        "email",
+        "reset_password",
+        userResult.userName
+      );
+      console.log("verifyEmail", verifyEmail);
+      if (verifyEmail.status == 400) {
+        return res.json(
+          new response({ email_verification_sent: false }, "Email invalid", 400)
+        );
       }
-      if(verifyEmail.status == 403){
-        return res.json(new response({email_verification_sent:false}, "Email Verification Servive Unavailable", 403));
+      if (verifyEmail.status == 403) {
+        return res.json(
+          new response(
+            { email_verification_sent: false },
+            "Email Verification Servive Unavailable",
+            403
+          )
+        );
       }
-        
+
       await updateUser({ _id: userResult._id }, { isReset: true });
-      return res.json(new response({email_verification_sent:true}, responseMessage.RESET_LINK_SEND));
+      return res.json(
+        new response(
+          { email_verification_sent: true },
+          responseMessage.RESET_LINK_SEND
+        )
+      );
     } catch (error) {
       return next(error);
     }
   }
-  
+
   /**
-     * @swagger
-     * /admin/resetPassword:
-     *   put:
-     *     tags:
-     *       - ADMIN
-     *     description: resetPassword
-     *     produces:
-     *       - application/json
-     *     parameters:
-     *       - name: token
-     *         description: token
-     *         in: path
-     *         required: true
-     *       - name: resetPassword
-     *         description: resetPassword
-     *         in: body
-     *         required: true
-     *         schema:
-     *           $ref: '#/definitions/resetPassword'
-     *     responses:
-     *       200:
-     *         description: Returns success message
-     */
+   * @swagger
+   * /admin/resetPassword:
+   *   put:
+   *     tags:
+   *       - ADMIN
+   *     description: resetPassword
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: token
+   *         description: token
+   *         in: path
+   *         required: true
+   *       - name: resetPassword
+   *         description: resetPassword
+   *         in: body
+   *         required: true
+   *         schema:
+   *           $ref: '#/definitions/resetPassword'
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
   async resetPassword(req, res, next) {
     var validationSchema = {
       email: Joi.string().email().required(),
@@ -552,29 +631,44 @@ class userController {
       otp: Joi.string().length(6).required(),
     };
     try {
-      const { email, password, otp } = await Joi.validate(req.body, validationSchema);
+      const { email, password, otp } = await Joi.validate(
+        req.body,
+        validationSchema
+      );
       var userResult = await findUser({ email: email });
       if (!userResult) {
-        return res.json(new response(apiError.notFound(responseMessage.USER_NOT_FOUND)));
+        return res.json(
+          new response(apiError.notFound(responseMessage.USER_NOT_FOUND))
+        );
       }
-      if(!userResult.isReset) {
-        return res.json(new response({verified:false}, "Error invalid request", 401));
+      if (!userResult.isReset) {
+        return res.json(
+          new response({ verified: false }, "Error invalid request", 401)
+        );
       }
       const verify = await Twilio.checkVerification(userResult.email, otp);
-      console.log('to', verify);
-      if(verify.status == "400"){
-        return res.json(new response({verified:false}, "Email invalid", 400));
+      console.log("to", verify);
+      if (verify.status == "400") {
+        return res.json(
+          new response({ verified: false }, "Email invalid", 400)
+        );
       }
-      if(verify.status == "404"){
-        return res.json(new response({verified:false}, "Code expired or invalid", 404));
+      if (verify.status == "404") {
+        return res.json(
+          new response({ verified: false }, "Code expired or invalid", 404)
+        );
       }
-      if(verify?.valid || verify.status == "approved"){
+      if (verify?.valid || verify.status == "approved") {
         userResult.password = bcrypt.hashSync(password);
         userResult.isReset = false;
-        await userResult.save();  
-        return res.json(new response({verified:verify?.valid}, responseMessage.PWD_CHANGED));
-      }  
-      return res.json(new response({verified:verify?.valid}, 'Code invalid', 400));
+        await userResult.save();
+        return res.json(
+          new response({ verified: verify?.valid }, responseMessage.PWD_CHANGED)
+        );
+      }
+      return res.json(
+        new response({ verified: verify?.valid }, "Code invalid", 400)
+      );
     } catch (error) {
       return next(error);
     }
@@ -612,9 +706,9 @@ class userController {
 
       var userDetails = {
         ...userResult._doc,
-        withdrawFees : commissionResult?.contentCreatorFee  || 1,
-      }
-       
+        withdrawFees: commissionResult?.contentCreatorFee || 1,
+      };
+
       return res.send({
         userDetails,
         responseMessage: responseMessage.USER_DETAILS,
@@ -659,7 +753,6 @@ class userController {
       return next(error);
     }
   }
-
 
   /**
    * @swagger
@@ -743,19 +836,24 @@ class userController {
 
       var result = await allUsersList(validatedBody);
       var earnings = await earningList({});
-      let usersWithEarnings = result.docs.map(user => {
-        const index = earnings.findIndex(el => el.userId.toString() == user._id.toString());
-        if(index !== -1){
-          const { masBalance, busdBalance, usdtBalance, referralBalance }  = earnings[index]
+      let usersWithEarnings = result.docs.map((user) => {
+        const index = earnings.findIndex(
+          (el) => el.userId.toString() == user._id.toString()
+        );
+        if (index !== -1) {
+          const { masBalance, busdBalance, usdtBalance, referralBalance } =
+            earnings[index];
           return {
             ...user.toObject(),
-            masBalance, busdBalance, usdtBalance, referralBalance 
-          }
-          
-        } 
-        return user.toObject()
-     });
-     result.docs = usersWithEarnings;
+            masBalance,
+            busdBalance,
+            usdtBalance,
+            referralBalance,
+          };
+        }
+        return user.toObject();
+      });
+      result.docs = usersWithEarnings;
       return res.json(new response(result, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);
@@ -805,17 +903,22 @@ class userController {
 
       const result = await paginateSearch(validatedBody);
       const earnings = await earningList({});
-      const usersWithEarnings = result.docs.map(user => {
-        const index = earnings.findIndex(el => el.userId.toString() == user._id.toString());
-        if(index !== -1){
-          const { masBalance, busdBalance, usdtBalance, referralBalance }  = earnings[index]
+      const usersWithEarnings = result.docs.map((user) => {
+        const index = earnings.findIndex(
+          (el) => el.userId.toString() == user._id.toString()
+        );
+        if (index !== -1) {
+          const { masBalance, busdBalance, usdtBalance, referralBalance } =
+            earnings[index];
           return {
             ...user.toObject(),
-            masBalance, busdBalance, usdtBalance, referralBalance
-          }
-
+            masBalance,
+            busdBalance,
+            usdtBalance,
+            referralBalance,
+          };
         }
-        return user.toObject()
+        return user.toObject();
       });
       result.docs = usersWithEarnings;
       return res.json(new response(result, responseMessage.DATA_FOUND));
@@ -956,13 +1059,12 @@ class userController {
     };
     try {
       let userResult;
-      const { userName } = await Joi.validate(req.params, validationSchema);        
+      const { userName } = await Joi.validate(req.params, validationSchema);
       userResult = await userAllDetailsByUserName(userName);
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
       return res.json(new response(userResult, responseMessage.DATA_FOUND));
-      
     } catch (error) {
       return next(error);
     }
@@ -1133,13 +1235,25 @@ class userController {
 
   async updateProfile(req, res, next) {
     try {
-      const profilePic = req.files.find(i => i?.fieldname === "profilePicFile")?.path;
-      const coverPic = req.files.find(i => i?.fieldname === "coverPicFile")?.path;
+      const profilePic = req.files.find(
+        (i) => i?.fieldname === "profilePicFile"
+      )?.path;
+      const coverPic = req.files.find(
+        (i) => i?.fieldname === "coverPicFile"
+      )?.path;
       let validatedBody = req.body;
 
-      profilePic ? validatedBody.profilePic = await commonFunction.getFileUrlOnPhone(profilePic) : null;
+      profilePic
+        ? (validatedBody.profilePic = await commonFunction.getFileUrlOnPhone(
+            profilePic
+          ))
+        : null;
 
-      coverPic ? validatedBody.coverPic = await commonFunction.getFileUrlOnPhone(coverPic) : null;
+      coverPic
+        ? (validatedBody.coverPic = await commonFunction.getFileUrlOnPhone(
+            coverPic
+          ))
+        : null;
 
       let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
@@ -1279,9 +1393,8 @@ class userController {
       if (!Bundle) {
         return apiError.notFound(responseMessage.NFT_NOT_FOUND);
       }
-      let balance = Bundle.coinName.toLowerCase()+'Balance';
-      if ( userResult[balance] >= Bundle.donationAmount)
-       {
+      let balance = Bundle.coinName.toLowerCase() + "Balance";
+      if (userResult[balance] >= Bundle.donationAmount) {
         let CreatorUser = await findUser({
           _id: Bundle.userId,
           status: { $ne: status.DELETE },
@@ -1309,7 +1422,7 @@ class userController {
         earningObj.$inc = { [balance]: Number(nftDonationAmount) };
         firstCommission[balance] = commissionFee;
         userEarn[balance] = nftDonationAmount;
-        
+
         if (!CreatorUser.supporters.includes(userResult._id)) {
           updateQuery.$addToSet = { supporters: Bundle.userId };
         }
@@ -1385,11 +1498,25 @@ class userController {
         } else {
           await updateEarning({ _id: userEarningResult._id }, earningObj);
         }
-        
+
         addUserIntoFeed(Bundle._id, userResult._id);
-        return res.json(new response({subscribed:'yes',  nb: Bundle.subscribers.length }, responseMessage.SUBSCRIBED));
+        return res.json(
+          new response(
+            {
+              subscribed: "yes",
+              nb: Bundle.subscribers.length,
+            },
+            responseMessage.SUBSCRIBED
+          )
+        );
       } else {
-        return res.json(new response({subscribed:'no'}, responseMessage.INSUFFICIENT_BALANCE(Bundle.coinName),400));
+        return res.json(
+          new response(
+            { subscribed: "no" },
+            responseMessage.INSUFFICIENT_BALANCE(Bundle.coinName),
+            400
+          )
+        );
       }
     } catch (error) {
       return next(error);
@@ -1438,17 +1565,25 @@ class userController {
         throw apiError.notFound(responseMessage.NOT_FOUND);
       }
       if (
-        userResult.following.includes(userCheck._id) || 
+        userResult.following.includes(userCheck._id) ||
         userCheck.followers.includes(userResult._id)
       ) {
         await updateUser(
           { _id: userResult._id },
-          { $pull: { following: userCheck._id }}
+          { $pull: { following: userCheck._id } }
         );
-        
+
         userCheck.followers.remove(userResult._id);
         await userCheck.save();
-        return res.json(new response({subscribed:'no', nb: userCheck.followers.length }, responseMessage.UNSUBSCRIBED));
+        return res.json(
+          new response(
+            {
+              subscribed: "no",
+              nb: userCheck.followers.length,
+            },
+            responseMessage.UNSUBSCRIBED
+          )
+        );
       } else {
         notificationObj = {
           userId: userCheck._id,
@@ -1463,7 +1598,15 @@ class userController {
         );
         userCheck.followers.push(userResult._id);
         await userCheck.save();
-        return res.json(new response({subscribed:'yes',  nb: userCheck.followers.length }, responseMessage.SUBSCRIBED));
+        return res.json(
+          new response(
+            {
+              subscribed: "yes",
+              nb: userCheck.followers.length,
+            },
+            responseMessage.SUBSCRIBED
+          )
+        );
       }
     } catch (error) {
       return next(error);
@@ -1495,52 +1638,50 @@ class userController {
       if (!userResult) {
         throw apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      if(userResult.followers.length > 0){
+      if (userResult.followers.length > 0) {
         let followersListResult = await followersList(userResult.followers);
         return res.json(
           new response(followersListResult, responseMessage.DATA_FOUND)
         );
       }
       return apiError.notFound(responseMessage.DATA_NOT_FOUND);
-      
     } catch (error) {
       return next(error);
     }
   }
 
   /**
- * @swagger
- * /user/profileFollowingList:
- *   get:
- *     tags:
- *       - USER SUBSCRIPTION
- *     description: My following
- *     produces:
- *       - application/json
- *     parameters:
- *       - name: token
- *         description: token
- *         in: header
- *         required: true
- *     responses:
- *       200:
- *         description: Returns success message
- */
+   * @swagger
+   * /user/profileFollowingList:
+   *   get:
+   *     tags:
+   *       - USER SUBSCRIPTION
+   *     description: My following
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: token
+   *         description: token
+   *         in: header
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
 
-    async profileFollowingList(req, res, next) {
+  async profileFollowingList(req, res, next) {
     try {
       let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
         throw apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      if(userResult.following.length > 0){
+      if (userResult.following.length > 0) {
         let followingListResult = await followingList(userResult.following);
         return res.json(
           new response(followingListResult, responseMessage.DATA_FOUND)
         );
       }
       return apiError.notFound(responseMessage.DATA_NOT_FOUND);
-      
     } catch (error) {
       return next(error);
     }
@@ -1622,7 +1763,7 @@ class userController {
         blockStatus: false,
         _id: { $in: uniqueArray },
       });
-    
+
       return res.send({
         result: result,
         responseMessage: responseMessage.USER_DETAILS,
@@ -1877,6 +2018,25 @@ class userController {
       return res.json(new response(updated, responseMessage.LIKE_BUNDLE));
     } catch (error) {
       return next(error);
+    }
+  }
+
+  async userNft(req, res, next) {
+    const validationSchema = {
+      userId: Joi.string().required(),
+    };
+    try {
+      const { userId } = await Joi.validate(req.params, validationSchema);
+      let userResult = await findUser({ _id: userId });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+
+      const result = await findUserNft({ userId: userId });
+
+      return res.json(new response(result, "Data found successfully", 200));
+    } catch (e) {
+      next(e);
     }
   }
 
@@ -2163,27 +2323,27 @@ class userController {
   }
 
   /**
-    * @swagger
-    * /user/subscription/{_id}:
-    *   get:
-    *     tags:
-    *       - USER SUBSCRIPTION
-    *     description: viewSubscription
-    *     produces:
-    *       - application/json
-    *     parameters:
-    *       - name: token
-    *         description: token
-    *         in: header
-    *         required: true
-    *       - name: _id
-    *         description: _id
-    *         in: path
-    *         required: true
-    *     responses:
-    *       200:
-    *         description: Returns success message
-    */
+   * @swagger
+   * /user/subscription/{_id}:
+   *   get:
+   *     tags:
+   *       - USER SUBSCRIPTION
+   *     description: viewSubscription
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: token
+   *         description: token
+   *         in: header
+   *         required: true
+   *       - name: _id
+   *         description: _id
+   *         in: path
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
 
   async viewSubscription(req, res, next) {
     const validationSchema = {
@@ -2208,27 +2368,27 @@ class userController {
   }
 
   /**
-    * @swagger
-    * /user/subscription:
-    *   delete:
-    *     tags:
-    *       - USER SUBSCRIPTION
-    *     description: deleteSubscription
-    *     produces:
-    *       - application/json
-    *     parameters:
-    *       - name: token
-    *         description: token
-    *         in: header
-    *         required: true
-    *       - name: _id
-    *         description: _id
-    *         in: query
-    *         required: true
-    *     responses:
-    *       200:
-    *         description: Returns success message
-    */
+   * @swagger
+   * /user/subscription:
+   *   delete:
+   *     tags:
+   *       - USER SUBSCRIPTION
+   *     description: deleteSubscription
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: token
+   *         description: token
+   *         in: header
+   *         required: true
+   *       - name: _id
+   *         description: _id
+   *         in: query
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
 
   async deleteSubscription(req, res, next) {
     const validationSchema = {
@@ -2255,27 +2415,27 @@ class userController {
   }
 
   /**
-  * @swagger
-  * /user/bundle/{_id}:
-  *   get:
-  *     tags:
-  *       - USER BUNDLE
-  *     description: viewBundle
-  *     produces:
-  *       - application/json
-  *     parameters:
-  *       - name: token
-  *         description: token
-  *         in: header
-  *         required: true
-  *       - name: _id
-  *         description: _id
-  *         in: path
-  *         required: true
-  *     responses:
-  *       200:
-  *         description: Returns success message
-  */
+   * @swagger
+   * /user/bundle/{_id}:
+   *   get:
+   *     tags:
+   *       - USER BUNDLE
+   *     description: viewBundle
+   *     produces:
+   *       - application/json
+   *     parameters:
+   *       - name: token
+   *         description: token
+   *         in: header
+   *         required: true
+   *       - name: _id
+   *         description: _id
+   *         in: path
+   *         required: true
+   *     responses:
+   *       200:
+   *         description: Returns success message
+   */
 
   async viewBundle(req, res, next) {
     const validationSchema = {
@@ -2405,29 +2565,27 @@ class userController {
     const validationSchema = {
       userId: Joi.string().required(),
       amount: Joi.number().required().min(1),
-      coinName: Joi.string().valid("MAS", "BUSD",'USDT').required(),
+      coinName: Joi.string().valid("MAS", "BUSD", "USDT").required(),
       message: Joi.string().optional().allow("").max(100),
     };
     const validate = Joi.validate(req.body, validationSchema);
-    if (validate.error) { 
-      return res.status(400).send(
-        new response({},validate.error.details[0].message,400)
-      ) 
+    if (validate.error) {
+      return res
+        .status(400)
+        .send(new response({}, validate.error.details[0].message, 400));
     }
     let amount = parseFloat(req.body.amount);
-    let balance = req.body.coinName.toLowerCase()+'Balance';
+    let balance = req.body.coinName.toLowerCase() + "Balance";
 
     try {
       let donatorUser = await findUserData({
         _id: req.userId,
         status: { $ne: status.DELETE },
       });
-      if (!donatorUser)
-      {
+      if (!donatorUser) {
         throw apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      if (parseFloat(donatorUser[balance]) >= amount ) 
-      {
+      if (parseFloat(donatorUser[balance]) >= amount) {
         let donatedToUser = await findUserData({
           _id: req.body.userId,
           status: { $ne: status.DELETE },
@@ -2445,32 +2603,37 @@ class userController {
         var commissionFee = amount * (commissionResult.contentCreatorFee / 100);
         var donationAmount = amount - commissionFee;
 
-        const creditDonator = await updateUser({ _id: donatorUser._id }, {
-          $inc : { [balance] : - amount }
-        });
+        const creditDonator = await updateUser(
+          { _id: donatorUser._id },
+          {
+            $inc: { [balance]: -amount },
+          }
+        );
 
-        if(!creditDonator) {
+        if (!creditDonator) {
           throw apiError.internal("Error updating user balance");
         }
-        
-        const debitDonatedTo = await updateUser({ _id: donatedToUser._id }, {
-          $inc :{[balance] : donationAmount}
-        });
 
-        if(!debitDonatedTo){
+        const debitDonatedTo = await updateUser(
+          { _id: donatedToUser._id },
+          {
+            $inc: { [balance]: donationAmount },
+          }
+        );
+
+        if (!debitDonatedTo) {
           throw apiError.internal("Error updating user balance");
         }
 
         let certificate = await getCertificateNumber();
 
-        
         await createTransaction({
           userId: donatorUser._id,
           toDonationUser: donatedToUser._id,
           amount: amount,
           transactionType: "Donation",
           transactionStatus: "SUCCESS",
-          transactionHash: "INTERNAL_TX_CERTIFICATE"+certificate,
+          transactionHash: "INTERNAL_TX_CERTIFICATE" + certificate,
           adminCommission: commissionFee,
           coinName: req.body.coinName,
         });
@@ -2501,8 +2664,7 @@ class userController {
       } else {
         return res.json(
           new response(
-            {}
-            `you have insufficient balance in ${req.body.coinName} in your wallet, Please add more ${req.body.coinName} first to your wallet .`,
+            {}`you have insufficient balance in ${req.body.coinName} in your wallet, Please add more ${req.body.coinName} first to your wallet .`,
             400
           )
         );
@@ -2865,6 +3027,7 @@ class userController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /user/viewTransaction/{_id}:
@@ -2914,6 +3077,7 @@ class userController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /user/publicPrivateFeed:
@@ -2968,6 +3132,7 @@ class userController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /user/privatePublicFeed:
@@ -3011,6 +3176,7 @@ class userController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /user/viewMyfeed:
@@ -3094,6 +3260,7 @@ class userController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /user/unSubscription:
@@ -3157,6 +3324,7 @@ class userController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /user/transactionList:
@@ -3201,6 +3369,7 @@ class userController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /user/sharedFeedList:
@@ -3251,119 +3420,119 @@ const deleteFile = async (filePath) => {
 };
 
 const manageDonationData = async (
-  senderUserId,
-  userId,
-  supporterCount,
-  message,
-  amount,
-  commission,
-  donationAmount,
-  coinName,
-  certificate
+    senderUserId,
+    userId,
+    supporterCount,
+    message,
+    amount,
+    commission,
+    donationAmount,
+    coinName,
+    certificate
 ) => {
-  try {
+    try {
 
-  var adminResult = await findUser({ userType: userType.ADMIN });
-  if (supporterCount === true) {
-    await updateUser(
-      { _id: userId },
-      { $addToSet: { supporters: senderUserId }, $inc: { supporterCount: 1 } }
-    );
-  }
-  
-  let commissionObj = {},
-      earningObj = {},
-      firstCommission = {},
-      userEarn = {};
+        var adminResult = await findUser({userType: userType.ADMIN});
+        if (supporterCount === true) {
+            await updateUser(
+                {_id: userId},
+                {$addToSet: {supporters: senderUserId}, $inc: {supporterCount: 1}}
+            );
+        }
 
-      let balance = coinName.toLowerCase()+'Balance';
-  
-  commissionObj.$inc[balance] = parseFloat(commission);
-  earningObj.$inc[balance] = parseFloat(donationAmount);
-  firstCommission[balance] = commission;
-  userEarn[balance] = donationAmount;
+        let commissionObj = {},
+            earningObj = {},
+            firstCommission = {},
+            userEarn = {};
 
-  let findData = await findDonation({
-    userId: userId,
-    status: { $ne: status.DELETE },
-  });
-  let obj = {
-    userId: userId,
-    history: [
-      {
-        senderUserId: senderUserId,
-        message: message,
-        amount,
-        coinName: coinName,
-      },
-    ],
-    certificateNumber: certificate,
-  };
-  obj[balance] = amount;
-  if (!findData) {
-    await createDonation(obj);
-  } else {
-    let incrementQuery = {
-      $inc: { balance: parseFloat(amount) },
-      $push: {
-        history: {
-          senderUserId: senderUserId,
-          message: message,
-          amount,
-          coinName: coinName,
-        },
-      },
-    };
-    await updateDonation({ _id: findData._id }, incrementQuery);
-    
-  }
+        let balance = coinName.toLowerCase() + 'Balance';
+
+        commissionObj.$inc[balance] = parseFloat(commission);
+        earningObj.$inc[balance] = parseFloat(donationAmount);
+        firstCommission[balance] = commission;
+        userEarn[balance] = donationAmount;
+
+        let findData = await findDonation({
+            userId: userId,
+            status: {$ne: status.DELETE},
+        });
+        let obj = {
+            userId: userId,
+            history: [
+                {
+                    senderUserId: senderUserId,
+                    message: message,
+                    amount,
+                    coinName: coinName,
+                },
+            ],
+            certificateNumber: certificate,
+        };
+        obj[balance] = amount;
+        if (!findData) {
+            await createDonation(obj);
+        } else {
+            let incrementQuery = {
+                $inc: {balance: parseFloat(amount)},
+                $push: {
+                    history: {
+                        senderUserId: senderUserId,
+                        message: message,
+                        amount,
+                        coinName: coinName,
+                    },
+                },
+            };
+            await updateDonation({_id: findData._id}, incrementQuery);
+
+        }
 
 
-  var adminEarningResult = await findEarning({
-    userId: adminResult._id,
-    status: status.ACTIVE,
-  });
-  var userEarningResult = await findEarning({
-    userId: userId,
-    status: status.ACTIVE,
-  });
-  if (!adminEarningResult) {
-    firstCommission.userId = adminResult._id;
-    await createEarning(firstCommission);
-  } else {
-    await updateEarning({ _id: adminEarningResult._id }, commissionObj);
-  }
+        var adminEarningResult = await findEarning({
+            userId: adminResult._id,
+            status: status.ACTIVE,
+        });
+        var userEarningResult = await findEarning({
+            userId: userId,
+            status: status.ACTIVE,
+        });
+        if (!adminEarningResult) {
+            firstCommission.userId = adminResult._id;
+            await createEarning(firstCommission);
+        } else {
+            await updateEarning({_id: adminEarningResult._id}, commissionObj);
+        }
 
-  if (!userEarningResult) {
-    userEarn.userId = userId;
-    await createEarning(userEarn);
-  } else {
-    await updateEarning({ _id: userEarningResult._id }, earningObj);
-  }
+        if (!userEarningResult) {
+            userEarn.userId = userId;
+            await createEarning(userEarn);
+        } else {
+            await updateEarning({_id: userEarningResult._id}, earningObj);
+        }
 
-} catch(err) {
-  return err;
-}
-  
+    } catch (err) {
+        return err;
+    }
+
 };
 
 const getCertificateNumber = () => {
-  const digits = "0123456789";
-  let txnId = "";
-  for (let i = 0; i < 12; i++) {
-    txnId += digits[Math.floor(Math.random() * 10)];
-  }
-  return txnId;
+    const digits = "0123456789";
+    let txnId = "";
+    for (let i = 0; i < 12; i++) {
+        txnId += digits[Math.floor(Math.random() * 10)];
+    }
+    return txnId;
 };
 
 const addUserIntoFeed = async (nftId, userId) => {
-  let audienceRes = await postList({
-    nftId: { $in: [nftId] },
-    status: { $ne: status.DELETE },
-  });
-  audienceRes = audienceRes.map((i) => i._id);
-  await feedUpdateAll(
-    { _id: { $in: audienceRes } },
-    { $addToSet: { users: userId } }
-  );
+    let audienceRes = await postList({
+        nftId: {$in: [nftId]},
+        status: {$ne: status.DELETE},
+    });
+    audienceRes = audienceRes.map((i) => i._id);
+    await feedUpdateAll(
+        {_id: {$in: audienceRes}},
+        {$addToSet: {users: userId}}
+    );
 };

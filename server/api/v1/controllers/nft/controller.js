@@ -8,10 +8,7 @@ const { nftServices } = require("../../services/nft");
 const { notificationServices } = require("../../services/notification");
 const { auctionNftServices } = require("../../services/auctionNft");
 
-const {
-  findUser,
-  findUserData,
-} = userServices;
+const { findUser, findUserData } = userServices;
 const {
   createNft,
   findNft,
@@ -22,11 +19,9 @@ const {
   listAllNft,
   nftListWithAggregatePipeline,
   findNftWithPopulateDetails,
-  nftPaginateSearch
+  nftPaginateSearch,
 } = nftServices;
-const {
-  createNotification,
-} = notificationServices;
+const { createNotification } = notificationServices;
 const {
   createAuctionNft,
   findAuctionNft,
@@ -43,6 +38,32 @@ const status = require("../../../../enums/status");
 const fs = require("fs");
 
 class nftController {
+  async subscribersUser(req, res, next) {
+    const validationSchema = {
+      _id: Joi.string().required(),
+    };
+    try {
+      const { _id } = await Joi.validate(req.params, validationSchema);
+
+      const orderResult = await findNft({
+        _id: _id,
+      });
+
+      if (!orderResult) {
+        return apiError.notFound(responseMessage.NFT_NOT_FOUND);
+      }
+
+      return res.json(
+        new response(
+            orderResult.subscribers,
+          "Subscribers found successfully",
+          200
+        )
+      );
+    } catch (e) {
+      next(e);
+    }
+  }
 
   /**
    * @swagger
@@ -617,7 +638,7 @@ class nftController {
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      if(req.files) {
+      if (req.files) {
         validatedBody.mediaUrl = await commonFunction.getImageUrl(req.files);
       }
       var nftResult = await findNft({
@@ -881,7 +902,6 @@ class nftController {
   async searchNft(req, res, next) {
     const validationSchema = {
       search: Joi.string().optional(),
-      filter: Joi.array().optional(),
       page: Joi.number().optional(),
       limit: Joi.number().optional(),
     };
@@ -892,16 +912,15 @@ class nftController {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
       let dataResults = await nftPaginateSearch(
-          validatedBody,
-          userResult._id,
-          userResult.subscribeNft
+        validatedBody,
+        userResult._id,
+        userResult.subscribeNft
       );
       return res.json(new response(dataResults, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);
     }
   }
-
 
   // /**
   //  * @swagger
@@ -945,9 +964,6 @@ class nftController {
       return next(error);
     }
   }
-
-
-
 }
 
 module.exports = new nftController();
@@ -964,36 +980,36 @@ const addFile = async (fileName, filePath) => {
 };
 
 const readData = async (path) => {
-  return new Promise((resolve) => {
-    doAsync(fs)
-      .readFile(path)
-      .then((data) => {
-        resolve(data);
-      });
-  });
+    return new Promise((resolve) => {
+        doAsync(fs)
+            .readFile(path)
+            .then((data) => {
+                resolve(data);
+            });
+    });
 };
 
 const deleteFile = async (filePath) => {
-  fs.unlink(filePath, (deleteErr) => {
-    if (deleteErr) {
-      return deleteErr;
-    }
-  });
+    fs.unlink(filePath, (deleteErr) => {
+        if (deleteErr) {
+            return deleteErr;
+        }
+    });
 };
 
 const notificattionToAllSubscriber = async (
-  followers,
-  description,
-  image
+    followers,
+    description,
+    image
 ) => {
-  for (let i of followers) {
-    let obj = {
-      title: `New Bundle Alert!`,
-      notificationType: "Bundle_Create",
-      description: description,
-      userId: i,
-      image: image,
-    };
-    await createNotification(obj);
-  }
+    for (let i of followers) {
+        let obj = {
+            title: `New Bundle Alert!`,
+            notificationType: "Bundle_Create",
+            description: description,
+            userId: i,
+            image: image,
+        };
+        await createNotification(obj);
+    }
 };

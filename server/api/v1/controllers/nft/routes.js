@@ -12,6 +12,7 @@ module.exports = Express.Router()
 
     .get("/nft/:_id", controller.viewNFT)
     .get("/viewNft/:_id", controller.viewNft)
+    .get('/subscribers/:_id', controller.subscribersUser)
     .delete("/nft", controller.deleteNFT)
     .get("/listNFT", controller.listNFT)
     .get("/bundleList", controller.bundleList)

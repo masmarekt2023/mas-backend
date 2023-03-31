@@ -20,6 +20,10 @@ const nftServices = {
     return await nftModel.findOne(query);
   },
 
+  findUserNft: async (query) => {
+    return await nftModel.find(query);
+  },
+
   findNftWithPopulateDetails: async (id, userId) => {
     let query = {
       _id: mongoose.Types.ObjectId(id),
@@ -147,7 +151,7 @@ const nftServices = {
 
   nftPaginateSearch: async (validatedBody) => {
     let query = { status: { $ne: status.DELETE } };
-    const { search, filter, page, limit } = validatedBody;
+    const { search, page, limit } = validatedBody;
     if (search) {
       query.$or = [
         { bundleTitle : { $regex: search, $options: "i" } },
