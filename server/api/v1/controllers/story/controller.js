@@ -6,8 +6,13 @@ const { storyServices } = require("../../services/story");
 const commonFunction = require("../../../../helper/util");
 const response = require("../../../../../assets/response");
 const { findUser } = userServices;
-const { creatStory, removeStory, findStory, findStories, updateStory } =
-  storyServices;
+const {
+  creatStory,
+  removeStory,
+  findStory,
+  findStories,
+  updateStory,
+} = storyServices;
 
 class storyController {
   /**
@@ -32,6 +37,27 @@ class storyController {
    *       200:
    *         description: Returns success message
    */
+
+  async getStory(req, res, next){
+    const validationSchema = {
+      storyId: Joi.string().required(),
+    };
+
+    try {
+      const { storyId } = await Joi.validate(req.params, validationSchema);
+
+      const result = await findStories({ _id: storyId });
+
+      if (!result) {
+        return res.json(apiError.notFound("Story Not Found"));
+      }
+
+      return res.json(new response(result, responseMessage.STORY_FOUND, 200));
+    } catch (e) {
+      next(e);
+    }
+  }
+
   async getStories(req, res, next) {
     const validationSchema = {
       userId: Joi.string().required(),
@@ -46,6 +72,36 @@ class storyController {
       const result = await findStories({ userId: userId });
 
       return res.json(new response(result, responseMessage.STORY_FOUND, 200));
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async getAllStories(req, res, next) {
+    const validationSchema = {
+      userId: Joi.string().required(),
+    };
+    try {
+      const { userId } = await Joi.validate(req.params, validationSchema);
+      const userResult = await findUser({ _id: userId });
+      if (!userResult) {
+        return res.json(apiError.notFound(responseMessage.USER_NOT_FOUND));
+      }
+
+      const result = await findStories({
+        userId: { $in: userResult?.following },
+      });
+
+      const resultUserIds = [...new Set(result.map(i => i.userId))];
+
+      const filterResult = resultUserIds.map(i => ({
+        userId: i,
+        result: result.filter((i2) => i2.userId === i),
+      }));
+
+      return res.json(
+        new response(filterResult, responseMessage.STORY_FOUND, 200)
+      );
     } catch (e) {
       next(e);
     }

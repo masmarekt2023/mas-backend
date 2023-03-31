@@ -22,6 +22,7 @@ const storyServices = {
       .findByIdAndUpdate(query, updateObj, { new: true })
       .select("-ethAccount.privateKey -password -otp");
   },
+
 };
 
 module.exports = { storyServices };
