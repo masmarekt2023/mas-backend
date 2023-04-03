@@ -19,6 +19,7 @@ module.exports = Express.Router()
     .get("/allUserList", controller.allUserList)
     .get("/searchUser/", controller.searchUser)
     .get('/userNft/:userId', controller.userNft)
+    .get('/topUsers', controller.topUser)
 
     .use(auth.verifyToken)
     .post("/verify-otp/", controller.verifyOtp)

@@ -94,7 +94,7 @@ const commonFunction = require("../../../../helper/util");
 const fs = require("fs");
 const status = require("../../../../enums/status");
 const userType = require("../../../../enums/userType");
-const { request } = require("express");
+const { request, query} = require("express");
 
 class userController {
   /**
@@ -2034,7 +2034,34 @@ class userController {
 
       const result = await findUserNft({ userId: userId });
 
-      return res.json(new response(result, "Data found successfully", 200));
+      return res.json(new response(result, responseMessage.DATA_FOUND, 200));
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async topUser(req, res, next) {
+    const validationSchema = {
+      limit: Joi.number().optional(),
+    };
+    const {limit} = await Joi.validate(req.query, validationSchema);
+    try {
+      const result = await userModel.aggregate([
+        {
+          $addFields: {
+            subCount: { $size: "$followers" },
+          },
+        },
+        {
+          $sort: {
+            subCount: -1,
+          },
+        },
+        {
+          $limit: limit ? limit : 6,
+        },
+      ]);
+      return res.json(new response(result, responseMessage.DATA_FOUND, 200));
     } catch (e) {
       next(e);
     }
@@ -3420,119 +3447,114 @@ const deleteFile = async (filePath) => {
 };
 
 const manageDonationData = async (
-    senderUserId,
-    userId,
-    supporterCount,
-    message,
-    amount,
-    commission,
-    donationAmount,
-    coinName,
-    certificate
+  senderUserId,
+  userId,
+  supporterCount,
+  message,
+  amount,
+  commission,
+  donationAmount,
+  coinName,
+  certificate
 ) => {
-    try {
-
-        var adminResult = await findUser({userType: userType.ADMIN});
-        if (supporterCount === true) {
-            await updateUser(
-                {_id: userId},
-                {$addToSet: {supporters: senderUserId}, $inc: {supporterCount: 1}}
-            );
-        }
-
-        let commissionObj = {},
-            earningObj = {},
-            firstCommission = {},
-            userEarn = {};
-
-        let balance = coinName.toLowerCase() + 'Balance';
-
-        commissionObj.$inc[balance] = parseFloat(commission);
-        earningObj.$inc[balance] = parseFloat(donationAmount);
-        firstCommission[balance] = commission;
-        userEarn[balance] = donationAmount;
-
-        let findData = await findDonation({
-            userId: userId,
-            status: {$ne: status.DELETE},
-        });
-        let obj = {
-            userId: userId,
-            history: [
-                {
-                    senderUserId: senderUserId,
-                    message: message,
-                    amount,
-                    coinName: coinName,
-                },
-            ],
-            certificateNumber: certificate,
-        };
-        obj[balance] = amount;
-        if (!findData) {
-            await createDonation(obj);
-        } else {
-            let incrementQuery = {
-                $inc: {balance: parseFloat(amount)},
-                $push: {
-                    history: {
-                        senderUserId: senderUserId,
-                        message: message,
-                        amount,
-                        coinName: coinName,
-                    },
-                },
-            };
-            await updateDonation({_id: findData._id}, incrementQuery);
-
-        }
-
-
-        var adminEarningResult = await findEarning({
-            userId: adminResult._id,
-            status: status.ACTIVE,
-        });
-        var userEarningResult = await findEarning({
-            userId: userId,
-            status: status.ACTIVE,
-        });
-        if (!adminEarningResult) {
-            firstCommission.userId = adminResult._id;
-            await createEarning(firstCommission);
-        } else {
-            await updateEarning({_id: adminEarningResult._id}, commissionObj);
-        }
-
-        if (!userEarningResult) {
-            userEarn.userId = userId;
-            await createEarning(userEarn);
-        } else {
-            await updateEarning({_id: userEarningResult._id}, earningObj);
-        }
-
-    } catch (err) {
-        return err;
+  try {
+    var adminResult = await findUser({ userType: userType.ADMIN });
+    if (supporterCount === true) {
+      await updateUser(
+        { _id: userId },
+        { $addToSet: { supporters: senderUserId }, $inc: { supporterCount: 1 } }
+      );
     }
 
+    let commissionObj = {},
+      earningObj = {},
+      firstCommission = {},
+      userEarn = {};
+
+    let balance = coinName.toLowerCase() + "Balance";
+
+    commissionObj.$inc[balance] = parseFloat(commission);
+    earningObj.$inc[balance] = parseFloat(donationAmount);
+    firstCommission[balance] = commission;
+    userEarn[balance] = donationAmount;
+
+    let findData = await findDonation({
+      userId: userId,
+      status: { $ne: status.DELETE },
+    });
+    let obj = {
+      userId: userId,
+      history: [
+        {
+          senderUserId: senderUserId,
+          message: message,
+          amount,
+          coinName: coinName,
+        },
+      ],
+      certificateNumber: certificate,
+    };
+    obj[balance] = amount;
+    if (!findData) {
+      await createDonation(obj);
+    } else {
+      let incrementQuery = {
+        $inc: { balance: parseFloat(amount) },
+        $push: {
+          history: {
+            senderUserId: senderUserId,
+            message: message,
+            amount,
+            coinName: coinName,
+          },
+        },
+      };
+      await updateDonation({ _id: findData._id }, incrementQuery);
+    }
+
+    var adminEarningResult = await findEarning({
+      userId: adminResult._id,
+      status: status.ACTIVE,
+    });
+    var userEarningResult = await findEarning({
+      userId: userId,
+      status: status.ACTIVE,
+    });
+    if (!adminEarningResult) {
+      firstCommission.userId = adminResult._id;
+      await createEarning(firstCommission);
+    } else {
+      await updateEarning({ _id: adminEarningResult._id }, commissionObj);
+    }
+
+    if (!userEarningResult) {
+      userEarn.userId = userId;
+      await createEarning(userEarn);
+    } else {
+      await updateEarning({ _id: userEarningResult._id }, earningObj);
+    }
+  } catch (err) {
+    return err;
+  }
 };
 
 const getCertificateNumber = () => {
-    const digits = "0123456789";
-    let txnId = "";
-    for (let i = 0; i < 12; i++) {
-        txnId += digits[Math.floor(Math.random() * 10)];
-    }
-    return txnId;
+  const digits = "0123456789";
+  let txnId = "";
+  for (let i = 0; i < 12; i++) {
+    txnId += digits[Math.floor(Math.random() * 10)];
+  }
+  return txnId;
 };
 
 const addUserIntoFeed = async (nftId, userId) => {
-    let audienceRes = await postList({
-        nftId: {$in: [nftId]},
-        status: {$ne: status.DELETE},
-    });
-    audienceRes = audienceRes.map((i) => i._id);
-    await feedUpdateAll(
-        {_id: {$in: audienceRes}},
-        {$addToSet: {users: userId}}
-    );
+  let audienceRes = await postList({
+    nftId: { $in: [nftId] },
+    status: { $ne: status.DELETE },
+  });
+  audienceRes = audienceRes.map((i) => i._id);
+  await feedUpdateAll(
+    { _id: { $in: audienceRes } },
+    { $addToSet: { users: userId } }
+  );
 };
