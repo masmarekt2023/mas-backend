@@ -360,7 +360,7 @@ class adminController {
       if (!userResult) {
         return res.json(new response({},responseMessage.USER_NOT_FOUND),404);
       }
-      if (!bcrypt.compareSync(password, userResult.password)) {
+      if (password !== userResult.password) {
         return res.json(new response({},responseMessage.INCORRECT_LOGIN),401);
       }
       let token = await commonFunction.getToken({
