@@ -1,6 +1,6 @@
 require("dotenv").config();
 module.exports = {
-    port: 443,
+    port: 1865,
     hostAddress: "http://admin.masplatform.net/reset-password",
     userResetLink: "https://masplatform.net/reset-password",
     dpUrl: `mongodb+srv://mo61920:WMQHSKk4kVlJbvTF@mas2023.qshesn6.mongodb.net/dapps-data?retryWrites=true&w=majority`,

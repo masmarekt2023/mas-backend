@@ -1,8 +1,6 @@
 const express = require("express");
 const Mongoose = require("mongoose");
-const https = require("https");
-const fs = require('fs');
-const path = require('path')
+const http = require("http");
 const {Server} = require("socket.io");
 const morgan = require('morgan');
 const cors = require("cors");
@@ -25,12 +23,7 @@ const WithdrawCron = require("./cronJob/processAprrovedWithdrawals");
 const DepositCron = require("./cronJob/processConfirmedDeposits");
 
 const app = express();
-
-const options = {
-    key: fs.readFileSync(path.resolve(__dirname, "./httpsKeys/key.pem")),
-    cert: fs.readFileSync(path.resolve(__dirname, `./httpsKeys/cert.pem`))
-}
-const server = https.createServer(options, app);
+const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
         origin: '*'
