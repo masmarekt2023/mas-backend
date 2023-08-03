@@ -253,7 +253,7 @@ class userController {
       }
 
       const verify = await Twilio.checkVerification(email, otp);
-      if (verify.status === "pending" || !verify?.valid) {
+      if (verify.status === "pending" || !verify.valid) {
         return res.json(
           new response({ verified: false }, "Code expired or invalid", 404)
         );
@@ -430,7 +430,7 @@ class userController {
           new response({ verified: false }, "Email invalid", 400)
         );
       }
-      if (verify.status === "pending" || !verify?.valid) {
+      if (verify.status === "pending" || !verify.valid) {
         return res.json(
           new response({ verified: false }, "Code expired or invalid", 404)
         );
