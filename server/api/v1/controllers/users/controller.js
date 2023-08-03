@@ -706,7 +706,7 @@ class userController {
 
       var userDetails = {
         ...userResult._doc,
-        withdrawFees: commissionResult?.contentCreatorFee || 1,
+        withdrawFees: commissionResult.contentCreatorFee || 1,
       };
 
       return res.send({
@@ -1236,11 +1236,11 @@ class userController {
   async updateProfile(req, res, next) {
     try {
       const profilePic = req.files.find(
-        (i) => i?.fieldname === "profilePicFile"
-      )?.path;
+        (i) => i.fieldname === "profilePicFile"
+      ).path;
       const coverPic = req.files.find(
-        (i) => i?.fieldname === "coverPicFile"
-      )?.path;
+        (i) => i.fieldname === "coverPicFile"
+      ).path;
       let validatedBody = req.body;
 
       profilePic
