@@ -7,7 +7,7 @@
     "node": ">=16.0.0"
   },
   "scripts": {
-    "start": "node index.js",
+    "start:production": "node index.js",
     "start:dev": "nodemon index.js",
     "lint": "eslint server/**/*.js",
     "lint:fix": "eslint /**/*.js --fix",
