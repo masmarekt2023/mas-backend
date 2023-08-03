@@ -1,6 +1,6 @@
 require("dotenv").config();
 module.exports = {
-  port: 1865,
+  port: 443,
   dpUrl: `mongodb+srv://mo61920:WMQHSKk4kVlJbvTF@mas2023.qshesn6.mongodb.net/dapps-data?retryWrites=true&w=majority`,
   jwtsecret: "CVD!S9Fm7$M#8a",
   nodemailer: {
@@ -52,7 +52,7 @@ module.exports = {
 
   rpc: "https://cold-nameless-crater.bsc.discover.quiknode.pro/d4669858ede933d6642ec6309ba5089c338ead7c/",
   rpcws: "wss://cold-nameless-crater.bsc.discover.quiknode.pro/d4669858ede933d6642ec6309ba5089c338ead7c/",
-  
+
 
   contractABI: [
     {
