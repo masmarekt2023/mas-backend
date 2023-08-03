@@ -258,7 +258,7 @@ class userController {
           new response({ verified: false }, "Code expired or invalid", 404)
         );
       }
-      if (verify?.valid) {
+      if (verify.valid) {
         obj.emailVerification = true;
       }
 
@@ -436,7 +436,7 @@ class userController {
         );
       }
 
-      if (verify?.valid || verify.status == "approved") {
+      if (verify.valid || verify.status == "approved") {
         if (context === "verifyLater") {
           if (channel === "email") userResult.emailVerification = true;
           if (channel === "sms") userResult.phoneVerification = true;
@@ -453,13 +453,13 @@ class userController {
 
         return res.json(
           new response(
-            { verified: verify?.valid },
+            { verified: verify.valid },
             responseMessage.OTP_VIRIFIED
           )
         );
       }
       return res.json(
-        new response({ verified: verify?.valid }, "Code invalid", 400)
+        new response({ verified: verify.valid }, "Code invalid", 400)
       );
     } catch (error) {
       return next(error);
@@ -658,16 +658,16 @@ class userController {
           new response({ verified: false }, "Code expired or invalid", 404)
         );
       }
-      if (verify?.valid || verify.status == "approved") {
+      if (verify.valid || verify.status == "approved") {
         userResult.password = bcrypt.hashSync(password);
         userResult.isReset = false;
         await userResult.save();
         return res.json(
-          new response({ verified: verify?.valid }, responseMessage.PWD_CHANGED)
+          new response({ verified: verify.valid }, responseMessage.PWD_CHANGED)
         );
       }
       return res.json(
-        new response({ verified: verify?.valid }, "Code invalid", 400)
+        new response({ verified: verify.valid }, "Code invalid", 400)
       );
     } catch (error) {
       return next(error);
