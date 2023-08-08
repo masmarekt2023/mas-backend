@@ -36,12 +36,8 @@ class UploadHandler {
       storage: this.storage,
       fileFilter: function (req, file, cb) {
         let ext = path.extname(file.originalname).toLowerCase();
-        if (ext !== '.png' && 
-            ext !== '.jpg' && 
-            ext !== '.jpeg' && 
-            ext !== '.gif' && 
-            ext !== '.mp4' && 
-            ext !== '.svg') {
+        const formatType = ['.png','.jpg', '.jpeg', ".mp4", ".avi", ".mkv", ".mov", ".wmv", ".flv", ".webm", '.svg', '.gif']
+        if (!formatType.includes(ext)) {
             return cb(Boom.badRequest('file format not allowed'), false);
         }
         cb(null, true);
