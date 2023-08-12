@@ -64,7 +64,7 @@ module.exports = Express.Router()
     .delete("/unSubscription", controller.unSubscription)
     .get("/depositeTransactionlist", controller.depositeTransactionlist)
     .get("/sharedFeedList", controller.sharedFeedList)
-
+    .get("/getSubscription/:userId/:nftId", controller.getSubscription)
     .use(upload.uploadFile)
     .post("/shareWithAudience", controller.shareWithAudience)
     .put("/updateProfile", controller.updateProfile);

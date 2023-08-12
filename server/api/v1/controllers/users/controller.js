@@ -47,6 +47,7 @@ const {
   updateSubscription,
   subscriptionList,
   subscriptionListWithAggregate,
+    findAllSubscriptions
 } = subscriptionServices;
 const { findBundle } = bundleServices;
 const {
@@ -3430,6 +3431,23 @@ class userController {
         return apiError.notFound(responseMessage.DATA_NOT_FOUND);
       }
       return res.json(new response(shared, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async getSubscription(req, res, next) {
+    const validationSchema = {
+      userId: Joi.string().required(),
+      nftId: Joi.string().required(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.params, validationSchema);
+      const subscription = await findSubscription(validatedBody);
+      if (!subscription) {
+        return apiError.notFound(responseMessage.SUBSCRIPTION_NOT_FOUND);
+      }
+      return res.json(new response(subscription, responseMessage.DETAILS_FETCHED));
     } catch (error) {
       return next(error);
     }

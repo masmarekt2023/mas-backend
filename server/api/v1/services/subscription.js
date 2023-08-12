@@ -1,5 +1,6 @@
 const subscriptionModel = require("../../../models/subscription");
 const mongoose = require("mongoose");
+const {query} = require("express");
 
 const subscriptionServices = {
   createSubscription: async (insertObj) => {
@@ -8,6 +9,10 @@ const subscriptionServices = {
 
   findSubscription: async (query) => {
     return await subscriptionModel.findOne(query);
+  },
+
+  findAllSubscriptions: async (query) => {
+    return await subscriptionModel.find(query).select("nftId");
   },
 
   updateSubscription: async (query, updateObj) => {
@@ -31,7 +36,7 @@ const subscriptionServices = {
           localField: "nftId",
           foreignField: "_id",
           pipeline: [
-            
+
             {
               $lookup: {
                 from: "user",
@@ -51,7 +56,7 @@ const subscriptionServices = {
             },
           ],
         }
-        
+
       },
       {
         $unwind: "$bundleDetails",
