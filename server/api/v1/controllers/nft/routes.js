@@ -7,10 +7,10 @@ module.exports = Express.Router()
 
     .get("/listAllNft", controller.listAllNft)
     .get("/nftList", controller.allNftAuctionList)
+    .get("/nft/:_id", controller.viewNFT)
 
     .use(auth.verifyToken)
 
-    .get("/nft/:_id", controller.viewNFT)
     .get("/viewNft/:_id", controller.viewNft)
     .get('/subscribers/:_id', controller.subscribersUser)
     .delete("/nft", controller.deleteNFT)

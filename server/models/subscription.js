@@ -1,5 +1,6 @@
 const Mongoose = require("mongoose");
 const status = require("../enums/status");
+const mongoosePaginate = require("mongoose-paginate");
 
 const options = {
   collection: "subscription",
@@ -33,5 +34,7 @@ const schemaDefination = new Schema(
   },
   options
 );
+
+schemaDefination.plugin(mongoosePaginate);
 
 module.exports = Mongoose.model("subscription", schemaDefination);

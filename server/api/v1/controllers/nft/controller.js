@@ -18,7 +18,7 @@ const {
   nftListWithAggregate,
   listAllNft,
   nftListWithAggregatePipeline,
-  findNftWithPopulateDetails,
+  myNftPaginateSearch,
   nftPaginateSearch,
 } = nftServices;
 const { createNotification } = notificationServices;
@@ -354,18 +354,22 @@ class nftController {
    */
 
   async myAuctionNftList(req, res, next) {
+    const validationSchema = {
+      search: Joi.string().optional(),
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
     try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
       let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      let dataResults = await auctionNftList({
-        userId: userResult._id,
-        status: { $ne: status.DELETE },
-      });
-      if (dataResults.length == 0) {
+      let dataResults = await myNftPaginateSearch(validatedBody ,userResult._id,);
+      console.log(dataResults)
+      /*if (dataResults.length == 0) {
         throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
-      }
+      }*/
       return res.json(new response(dataResults, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);
@@ -511,16 +515,17 @@ class nftController {
     };
     try {
       const { _id } = await Joi.validate(req.params, validationSchema);
-      let userResult = await findUser({ _id: req.userId });
+      /*let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
-      }
-      var nftResult = await findNftWithPopulateDetails(_id, userResult._id);
+      }*/
+      /*var nftResult = await findNftWithPopulateDetails(_id, userResult._id);
       if (nftResult.length == 0) {
         throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
-      }
+      }*/
+      const data = await findNft({_id: _id});
       return res.json(
-        new response(nftResult[0], responseMessage.DETAILS_FETCHED)
+        new response(data, responseMessage.DETAILS_FETCHED)
       );
     } catch (error) {
       return next(error);
@@ -731,6 +736,8 @@ class nftController {
   async listNFT(req, res, next) {
     const validationSchema = {
       search: Joi.string().optional(),
+      limit: Joi.number().optional(),
+      page: Joi.number().optional()
     };
     try {
       const validatedBody = await Joi.validate(req.query, validationSchema);
@@ -738,7 +745,7 @@ class nftController {
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      let dataResults = await nftListWithAggregatePipeline(
+      let dataResults = await nftPaginateSearch(
         validatedBody,
         userResult._id
       );

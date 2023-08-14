@@ -194,6 +194,7 @@ const nftServices = {
       page: page || 1,
       limit: limit || 10,
       sort: { createdAt: -1 },
+      populate: {path: 'userId'}
     };
     return await nftModel.paginate(query, options);
   },

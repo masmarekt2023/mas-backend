@@ -47,7 +47,7 @@ const {
   updateSubscription,
   subscriptionList,
   subscriptionListWithAggregate,
-    findAllSubscriptions
+  subscriptionWithPaginate
 } = subscriptionServices;
 const { findBundle } = bundleServices;
 const {
@@ -95,7 +95,7 @@ const commonFunction = require("../../../../helper/util");
 const fs = require("fs");
 const status = require("../../../../enums/status");
 const userType = require("../../../../enums/userType");
-const { request, query} = require("express");
+const nftModel = require("../../../../models/nft");
 
 class userController {
   /**
@@ -1708,15 +1708,17 @@ class userController {
    */
 
   async mySubscriptions(req, res, next) {
+    const validationSchema = {
+      limit: Joi.number().optional(),
+      page: Joi.number().optional(),
+    };
     try {
+      const validateBody = await Joi.validate(req.query, validationSchema);
       let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      var result = await subscriptionListWithAggregate(userResult._id);
-      if (result.length == 0) {
-        return res.json(new response(result, responseMessage.DATA_NOT_FOUND));
-      }
+      const result = await subscriptionWithPaginate(validateBody, userResult._id);
       return res.json(new response(result, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);

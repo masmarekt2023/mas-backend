@@ -1,6 +1,5 @@
 const subscriptionModel = require("../../../models/subscription");
 const mongoose = require("mongoose");
-const {query} = require("express");
 
 const subscriptionServices = {
   createSubscription: async (insertObj) => {
@@ -23,6 +22,19 @@ const subscriptionServices = {
 
   subscriptionList: async (query) => {
     return await subscriptionModel.find(query).populate("nftId");
+  },
+
+  subscriptionWithPaginate: async (validatedBody, userId) => {
+    let query = { userId: userId, subscriptionStatus: 'ACTIVE' }
+    console.log(validatedBody);
+    const {page, limit} = validatedBody;
+    let options = {
+      page: page || 1,
+      limit: limit || 10,
+      sort: { createdAt: -1 },
+      populate: {path: 'nftId', populate: {path: 'userId'}}
+    };
+    return await subscriptionModel.paginate(query, options);
   },
 
   subscriptionListWithAggregate: async (userId) => {
