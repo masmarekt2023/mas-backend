@@ -1,5 +1,6 @@
 const audienceModel = require("../../../models/audience");
 const status = require("../../../enums/status");
+const {query} = require("express");
 
 const audienceServices = {
   createAudience: async (insertObj) => {
@@ -32,6 +33,16 @@ const audienceServices = {
 
   feedUpdateAll: async (query, updateObj) => {
     return await audienceModel.updateMany(query, updateObj, { multi: true });
+  },
+
+  feedWithPagination: async (query, validatedBody) => {
+    const { page, limit } = validatedBody;
+    const options = {
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 10,
+      sort: { createdAt: -1 },
+    };
+    return await audienceModel.paginate(query, options);
   },
 
   audienceContentList: async (query) => {

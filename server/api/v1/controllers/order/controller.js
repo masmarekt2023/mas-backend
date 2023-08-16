@@ -343,7 +343,12 @@ class orderController {
    */
 
   async listOrder(req, res, next) {
+    const validationSchema = {
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
     try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
       let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
@@ -353,7 +358,7 @@ class orderController {
         status: { $ne: status.DELETE },
         orderPlace: true,
         isSold: false,
-      });
+      }, validatedBody);
       return res.json(new response(dataResults, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);

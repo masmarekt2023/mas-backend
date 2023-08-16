@@ -397,7 +397,12 @@ class bidController {
    */
 
   async myBid(req, res, next) {
+    const validationSchema = {
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
     try {
+      const validateBody = await Joi.validate(req.query, validationSchema);
       let userResult = await findUser({ _id: req.userId });
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
@@ -405,7 +410,7 @@ class bidController {
       let dataResults = await bidList({
         userId: userResult._id,
         status: { $ne: status.DELETE },
-      });
+      }, validateBody);
       return res.json(new response(dataResults, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);

@@ -60,19 +60,22 @@ const orderServices = {
     return await orderModel.findOneAndUpdate(query, updateObj, { new: true });
   },
 
-  orderList: async (query) => {
-    // let activeIds = await getActiveUser();
-    // query.userId = { $in: activeIds };
-    return await orderModel
-      .find(query)
-      .populate([
-        {
-          path: "userId",
-          select:
-            "-ethAccount.privateKey -password -referralCode -email -permissions",
-        },
-        { path: "nftId" },
-      ]);
+  orderList: async (query, validatedBody) => {
+    const { page, limit } = validatedBody;
+    let options = {
+      page: page || 1,
+      limit: limit || 10,
+      sort: { createdAt: -1 },
+      populate: [
+          {
+              path: "userId",
+              select:
+                  "-ethAccount.privateKey -password -referralCode -email -permissions",
+          },
+          { path: "nftId" },
+      ]
+    };
+    return await orderModel.paginate(query, options);
   },
 
   soldOrderList: async (query) => {

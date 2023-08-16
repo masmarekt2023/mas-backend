@@ -26,7 +26,6 @@ const {
   createAuctionNft,
   findAuctionNft,
   updateAuctionNft,
-  auctionNftList,
   allNftAuctionList,
 } = auctionNftServices;
 const activityModel = require("../../../../models/activityModel");

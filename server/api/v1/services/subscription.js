@@ -25,8 +25,7 @@ const subscriptionServices = {
   },
 
   subscriptionWithPaginate: async (validatedBody, userId) => {
-    let query = { userId: userId, subscriptionStatus: 'ACTIVE' }
-    console.log(validatedBody);
+    let query = { userId: userId, subscriptionStatus: 'ACTIVE', status: "ACTIVE" }
     const {page, limit} = validatedBody;
     let options = {
       page: page || 1,

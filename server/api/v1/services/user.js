@@ -4,7 +4,7 @@ const userType = require("../../../enums/userType");
 const mongoose = require("mongoose");
 
 const userServices = {
-  
+
   userCheck: async (userId) => {
     let query = {
       $and: [
@@ -63,7 +63,7 @@ const userServices = {
 
   allUser: async (query) => {
     return await userModel.find(query);
-  },  
+  },
 
   latestUserListWithPagination: async (search, page, limit, type) => {
     let query = { status: { $ne: status.DELETE } };
@@ -148,20 +148,30 @@ const userServices = {
     return await userModel.paginate(query, options);
   },
 
-  followersList: async (followers) => {
-    return userModel
-      .find({ _id: { $in: followers }, status: { $ne: status.DELETE } })
-      .select(
-        "-ethAccount.privateKey -password -permissions -otp"
-      );
+  followersList: async (followers, validatedBody) => {
+    const query = { _id: { $in: followers }, status: { $ne: status.DELETE } };
+    const { page, limit } = validatedBody;
+    const options = {
+      page: page || 1,
+      limit: limit || 10,
+      sort: { createdAt: -1 },
+      select:
+          "-ethAccount.privateKey -password -permissions -otp",
+    };
+    return await userModel.paginate(query, options);
   },
 
-  followingList: async (following) => {
-    return userModel
-      .find({ _id: { $in: following }, status: { $ne: status.DELETE } })
-      .select(
-        "-ethAccount.privateKey -password -permissions -otp"
-      );
+  followingList: async (following, validatedBody) => {
+    const query = { _id: { $in: following }, status: { $ne: status.DELETE } };
+    const { page, limit } = validatedBody;
+    const options = {
+      page: page || 1,
+      limit: limit || 10,
+      sort: { createdAt: -1 },
+      select:
+          "-ethAccount.privateKey -password -permissions -otp",
+    };
+    return await userModel.paginate(query, options);
   },
 
   userCount: async () => {
