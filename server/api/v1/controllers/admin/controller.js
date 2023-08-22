@@ -139,7 +139,7 @@ class adminController {
           throw apiError.conflict(responseMessage.USER_NAME_EXIST);
         }
       }
-      let userETHWallet = commonFunction.generateETHWallet();      
+      let userETHWallet = commonFunction.generateETHWallet();
 
       var obj = {
         userName: userName,
@@ -1825,7 +1825,7 @@ class adminController {
           parseFloat(validatedBody.time.split(" ")[0]) * 60 * 60 * 1000
       ).toISOString();
       }
-      
+
 
       await createNotification({
         title: `Block Alert!`,
@@ -1839,14 +1839,14 @@ class adminController {
           { actionApply: true, reportStatus: "RESOLVED" }
         );
       }
-      
+
       let obj = {
         userId: userCheck._id,
         message: validatedBody.message,
         time: validatedBody.time,
         tillValid: tillValid,
       };
-      
+
       return res.json(new response({}, responseMessage.BLOCKED));
     } catch (error) {
       return next(error);
@@ -4467,27 +4467,14 @@ class adminController {
    *         description: Something went wrong.
    */
   async addBanner(req, res, next) {
-    const validSchema = {
-      title: Joi.string().required(),
-      description: Joi.string().required(),
-      url: Joi.string().optional(),
-      file: Joi.optional(),
-    };
     try {
-      const validBody = await Joi.validate(req.body, validSchema);
+      const validBody = req.body
       let adminResult = await findUser({
         _id: req.userId,
         userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
       });
       if (!adminResult) {
         return res.send(apiError.invalid(responseMessage.USER_NOT_FOUND)) ;
-      }
-      let bannerResult = await findBanner({
-        title: validBody.title,
-        status: status.ACTIVE,
-      });
-      if (bannerResult) {
-        return res.send(apiError.conflict(responseMessage.ALREADY_EXITS)) ;
       }
       const uploadedMedia = await commonFunction.getImageUrl(req.files);
       req.files.shift()
