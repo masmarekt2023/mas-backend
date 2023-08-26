@@ -1872,6 +1872,34 @@ class userController {
         }
     }
 
+    async editAudience (req, res, next) {
+        const validationSchema = {
+            id: Joi.string().required(),
+            postType: Joi.string().optional(),
+            details: Joi.string().optional(),
+            mediaUrl: Joi.string().optional()
+        };
+        try {
+            const {id, postType, details} = await Joi.validate(req.body, validationSchema);
+            const  userResult = await findUser({_id: req.userId});
+            if (!userResult) {
+                return apiError.notFound(responseMessage.USER_NOT_FOUND);
+            }
+            let updateObj = {
+                postType,
+                details
+            };
+            if(req.files[0]?.path){
+                updateObj.mediaUrl = await commonFunction.getImageUrl(req.files);
+            }
+            const data = await updateAudience({_id: id}, updateObj);
+            return res.json(new response(data, 'Edited successfully'));
+        }catch (e) {
+            console.log(e);
+            return next(e);
+        }
+    }
+
     /**
      * @swagger
      * /user/myFeed:

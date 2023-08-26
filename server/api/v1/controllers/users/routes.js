@@ -68,4 +68,5 @@ module.exports = Express.Router()
     .get("/getSubscription/:userId/:nftId", controller.getSubscription)
     .use(upload.uploadFile)
     .post("/shareWithAudience", controller.shareWithAudience)
+    .put("/editAudience", controller.editAudience)
     .put("/updateProfile", controller.updateProfile);

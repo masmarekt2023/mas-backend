@@ -3,11 +3,11 @@ module.exports = {
   port: 1865,
   dpUrl: `mongodb+srv://mo61920:WMQHSKk4kVlJbvTF@mas2023.qshesn6.mongodb.net/dapps-data?retryWrites=true&w=majority`,
   jwtsecret: "CVD!S9Fm7$M#8a",
-  nodemailer: {
+  /*nodemailer: {
     service: "Zoho",
     email: "masm81883@zohomail.com",
     password: "2gPjcRqeZkEE",
-  },
+  },*/
   jwtOptions: {
     expiresIn: "24h",
   },
