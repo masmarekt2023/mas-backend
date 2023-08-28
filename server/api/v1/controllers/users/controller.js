@@ -90,13 +90,14 @@ const {createEarning, findEarning, updateEarning, earningList} =
     earningServices;
 const {findReferral} = referralServices;
 const {findAdvertisements} = advertisementServices;
-const {findBanner} = bannerServices;
+const {findBanner, paginateSearchBanner} = bannerServices;
 const Twilio = require("../../../../helper/twilio");
 const commonFunction = require("../../../../helper/util");
 const fs = require("fs");
 const status = require("../../../../enums/status");
 const userType = require("../../../../enums/userType");
 const nftModel = require("../../../../models/nft");
+const bannerModel = require("../../../../models/banner");
 
 class userController {
     /**
@@ -1857,7 +1858,7 @@ class userController {
                 {$set: {isShared: true}}
             );
             var obj = {
-                title: `New NFT Share Alert! (${validatedBody.title})`,
+                title: `New Media Share With Audience Alert! (${validatedBody.title})`,
                 description: `You have received a notification for ${validatedBody.details}`,
                 image: validatedBody.mediaUrl,
                 nftIds: validatedBody.nftId,
@@ -2898,6 +2899,23 @@ class userController {
     async getBanner(req, res, next) {
         try {
             var result = await findBanner({status: status.ACTIVE});
+            return res.json(new response(result, responseMessage.DATA_FOUND));
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    async listBanner(req, res, next) {
+        const validationSchema = {
+            page: Joi.number().optional(),
+            limit: Joi.number().optional(),
+        };
+        try {
+            const validatedBody = await Joi.validate(req.query, validationSchema);
+            const result = await bannerModel.paginate(validatedBody);
+            if (!result) {
+                return apiError.notFound(responseMessage.DATA_NOT_FOUND);
+            }
             return res.json(new response(result, responseMessage.DATA_FOUND));
         } catch (error) {
             return next(error);
