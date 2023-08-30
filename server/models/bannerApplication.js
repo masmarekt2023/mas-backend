@@ -3,12 +3,12 @@ const status = require("../enums/status");
 const mongoosePaginate = require("mongoose-paginate");
 
 const options = {
-  collection: "banners",
+  collection: "banners_application",
   timestamps: true,
 };
 
 const { Schema } = Mongoose;
-const schemaDefination = new Schema(
+const bannerSchema = new Schema(
   {
     title: { type: String },
     description: { type: String },
@@ -19,15 +19,9 @@ const schemaDefination = new Schema(
       enum: ["image", "video"],
       default: "image",
     },
-    background: { type: String },
-    backgroundType: {
-      type: String,
-      enum: ["image", "video"],
-      default: "image",
-    },
     status: { type: String, default: status.ACTIVE },
   },
   options
 );
-schemaDefination.plugin(mongoosePaginate);
-module.exports = Mongoose.model("banner", schemaDefination);
+bannerSchema.plugin(mongoosePaginate);
+module.exports = Mongoose.model("banner_application", bannerSchema);

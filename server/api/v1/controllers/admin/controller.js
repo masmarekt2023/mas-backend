@@ -52,12 +52,8 @@ const { findModerator, updateModerator, moderatorList } = moderatorServices;
 const { findReport, updateReport, reportList } = reportServices;
 const { createNotification } = notificationServices;
 const { findFee, updateFee, feeList } = feeServices;
-const {
-  findTransaction,
-  transactionList,
-  depositeList,
-  allTransactions,
-} = transactionServices;
+const { findTransaction, transactionList, depositeList, allTransactions } =
+  transactionServices;
 const { createLogo, findLogo, updateLogoById, logoList } = logoServices;
 const { createPress, findPress, updatePress, paginatePressList } =
   pressServices;
@@ -72,7 +68,7 @@ const {
 const { findSocial, findAllSocial, updateSocialById } = socialServices;
 const { findEarning } = earningServices;
 const { findReferral, updateReferral } = referralServices;
-const { createBanner, findBanner, updateBanner, paginateSearchBanner } =
+const { createBanner, findBanner, updateBanner, paginateSearchBanner, createAppBanner, updateAppBanner, findAppBanner, paginateSearchAppBanner } =
   bannerServices;
 
 const commonFunction = require("../../../../helper/util");
@@ -82,10 +78,10 @@ const planType = require("../../../../enums/planType");
 const bnb = require("../../../../helper/bnb");
 
 const Web3 = require("web3");
+const {findOneAndUpdate} = require("../../services/common.queries");
 
 let rpc = config.get("rpc");
 let web3 = new Web3(new Web3.providers.HttpProvider(rpc));
-
 
 class adminController {
   /**
@@ -358,10 +354,10 @@ class adminController {
       };
       var userResult = await findUser(query);
       if (!userResult) {
-        return res.json(new response({},responseMessage.USER_NOT_FOUND),404);
+        return res.json(new response({}, responseMessage.USER_NOT_FOUND), 404);
       }
       if (password !== userResult.password) {
-        return res.json(new response({},responseMessage.INCORRECT_LOGIN),401);
+        return res.json(new response({}, responseMessage.INCORRECT_LOGIN), 401);
       }
       let token = await commonFunction.getToken({
         id: userResult._id,
@@ -380,7 +376,6 @@ class adminController {
       return next(error);
     }
   }
-
 
   /**
    * @swagger
@@ -1805,8 +1800,11 @@ class adminController {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
 
-      if(userCheck.status == status.BLOCK){
-        await updateUser({ _id: userCheck._id }, { blockStatus: false, status: status.ACTIVE });
+      if (userCheck.status == status.BLOCK) {
+        await updateUser(
+          { _id: userCheck._id },
+          { blockStatus: false, status: status.ACTIVE }
+        );
         await createNotification({
           title: `Block Alert!`,
           description: `Your account is unblocked by admin`,
@@ -1817,15 +1815,17 @@ class adminController {
         return res.json(new response({}, responseMessage.UNBLOCKED));
       }
 
-      await updateUser({ _id: userCheck._id }, { blockStatus: true, status: status.BLOCK });
+      await updateUser(
+        { _id: userCheck._id },
+        { blockStatus: true, status: status.BLOCK }
+      );
       let tillValid;
-      if (validatedBody.time){
+      if (validatedBody.time) {
         tillValid = new Date(
-        new Date().getTime() +
-          parseFloat(validatedBody.time.split(" ")[0]) * 60 * 60 * 1000
-      ).toISOString();
+          new Date().getTime() +
+            parseFloat(validatedBody.time.split(" ")[0]) * 60 * 60 * 1000
+        ).toISOString();
       }
-
 
       await createNotification({
         title: `Block Alert!`,
@@ -1833,7 +1833,7 @@ class adminController {
         userId: userCheck._id,
         adminId: userResult._id,
       });
-      if(validatedBody.reportId){
+      if (validatedBody.reportId) {
         await updateReport(
           { _id: validatedBody.reportId },
           { actionApply: true, reportStatus: "RESOLVED" }
@@ -3445,6 +3445,7 @@ class adminController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /admin/viewLogo:
@@ -3648,6 +3649,7 @@ class adminController {
       return next(error);
     }
   }
+
   // /**
   //   * @swagger
   //   * /admin/donationTransactionlist:
@@ -3738,6 +3740,7 @@ class adminController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /admin/subscriptionListOfParticular:
@@ -3897,6 +3900,7 @@ class adminController {
       return next(error);
     }
   }
+
   /**
    * @swagger
    * /admin/transactionList:
@@ -4468,16 +4472,16 @@ class adminController {
    */
   async addBanner(req, res, next) {
     try {
-      const validBody = req.body
+      const validBody = req.body;
       let adminResult = await findUser({
         _id: req.userId,
         userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
       });
       if (!adminResult) {
-        return res.send(apiError.invalid(responseMessage.USER_NOT_FOUND)) ;
+        return res.send(apiError.invalid(responseMessage.USER_NOT_FOUND));
       }
       const uploadedMedia = await commonFunction.getImageUrl(req.files);
-      req.files.shift()
+      req.files.shift();
       const uploadedBackground = await commonFunction.getImageUrl(req.files);
       let result = await createBanner({
         title: validBody.title,
@@ -4485,6 +4489,30 @@ class adminController {
         url: validBody.url,
         media: uploadedMedia,
         background: uploadedBackground,
+      });
+      return res.json(new response(result, responseMessage.ADD_BANNER));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async addAppBanner(req, res, next) {
+    try {
+      const validBody = req.body;
+      let adminResult = await findUser({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!adminResult) {
+        return res.json(new apiError.notFound(responseMessage.USER_NOT_FOUND));
+      }
+      console.log(req.files);
+      const uploadedMedia = await commonFunction.getImageUrl(req.files);
+      let result = await createAppBanner({
+        title: validBody.title,
+        description: validBody.description,
+        url: validBody.url,
+        media: uploadedMedia,
       });
       return res.json(new response(result, responseMessage.ADD_BANNER));
     } catch (error) {
@@ -4523,6 +4551,25 @@ class adminController {
     try {
       const { _id } = await Joi.validate(req.query, validSchema);
       let result = await findBanner({
+        _id: _id,
+        status: { $ne: status.DELETE },
+      });
+      if (!result) {
+        return apiError.notFound(responseMessage.DATA_NOT_FOUND);
+      }
+      return res.json(new response(result, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async viewAppBanner(req, res, next) {
+    const validSchema = {
+      _id: Joi.string().required(),
+    };
+    try {
+      const { _id } = await Joi.validate(req.query, validSchema);
+      let result = await findAppBanner({
         _id: _id,
         status: { $ne: status.DELETE },
       });
@@ -4604,7 +4651,7 @@ class adminController {
         userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
       });
       if (!adminResult) {
-        throw apiError.invalid(responseMessage.USER_NOT_FOUND);
+        return res.send(apiError.invalid(responseMessage.USER_NOT_FOUND));
       }
       let bannerResult = await findBanner({
         _id: validBody._id,
@@ -4614,21 +4661,61 @@ class adminController {
         return apiError.notFound(responseMessage.DATA_NOT_FOUND);
       }
       if (req.files.length == 1) {
-        if(validBody.media){
+        if (validBody.media) {
           validBody.background = await commonFunction.getImageUrl(req.files);
         }
-        if(validBody.background){
+        if (validBody.background) {
           validBody.media = await commonFunction.getImageUrl(req.files);
         }
       }
       if (req.files.length == 2) {
-          validBody.media = await commonFunction.getImageUrl(req.files);
-          req.files.shift();
-          validBody.background = await commonFunction.getImageUrl(req.files);
+        validBody.media = await commonFunction.getImageUrl(req.files);
+        req.files.shift();
+        validBody.background = await commonFunction.getImageUrl(req.files);
       }
       let result = await updateBanner(
         { _id: bannerResult._id },
         { $set: validBody }
+      );
+      return res.json(new response(result, responseMessage.UPDATE_SUCCESS));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async editBannerApp(req, res, next) {
+    const validSchema = {
+      _id: Joi.string().required(),
+      description: Joi.string().optional(),
+      title: Joi.string().optional(),
+      url: Joi.string().optional(),
+      mediaType: Joi.string().valid("image", "video").optional(),
+      media: Joi.string().optional(),
+    };
+    try {
+      const validBody = await Joi.validate(req.body, validSchema);
+      let adminResult = await findUser({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!adminResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      let bannerResult = await findAppBanner({
+        _id: validBody._id,
+        status: { $ne: status.DELETE },
+      });
+      if (!bannerResult) {
+        return apiError.notFound(responseMessage.DATA_NOT_FOUND);
+      }
+      if (req.files.length === 1) {
+        if (validBody.media) {
+          validBody.background = await commonFunction.getImageUrl(req.files);
+        }
+      }
+      let result = await updateAppBanner(
+          { _id: bannerResult._id },
+          { $set: validBody }
       );
       return res.json(new response(result, responseMessage.UPDATE_SUCCESS));
     } catch (error) {
@@ -4696,6 +4783,36 @@ class adminController {
     }
   }
 
+  async deleteAppBanner(req, res, next) {
+    const validSchema = {
+      _id: Joi.string().required(),
+    };
+    try {
+      const { _id } = await Joi.validate(req.query, validSchema);
+      let adminResult = await findUser({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!adminResult) {
+        return res.json(apiError.notFound(responseMessage.USER_NOT_FOUND));
+      }
+      let bannerResult = await findAppBanner({
+        _id: _id,
+        status: { $ne: status.DELETE },
+      });
+      if (!bannerResult) {
+        return res.json(apiError.notFound(responseMessage.DATA_NOT_FOUND));
+      }
+      let result = await updateAppBanner(
+          { _id: bannerResult._id },
+          { $set: { status: status.DELETE } }
+      );
+      return res.json(new response(result, responseMessage.DELETE_SUCCESS));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /**
    * @swagger
    * /admin/listBanner:
@@ -4751,6 +4868,98 @@ class adminController {
       return res.json(new response(result, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);
+    }
+  }
+
+  async listAppBanner(req, res, next) {
+    const validationSchema = {
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
+      let adminResult = await findUser({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!adminResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      const result = await paginateSearchAppBanner(validatedBody);
+      if (!result) {
+        return apiError.notFound(responseMessage.DATA_NOT_FOUND);
+      }
+      return res.json(new response(result, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async getBannerDuration(req, res, next) {
+    try {
+      let adminResult = await findUser({
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!adminResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      return res.json(
+          new response(adminResult.bannerDuration, responseMessage.DATA_FOUND)
+      );
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async getAppBannerDuration(req, res, next) {
+    try {
+      let adminResult = await findUser({
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!adminResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      return res.json(
+          new response(adminResult.bannerAppDuration, responseMessage.DATA_FOUND)
+      );
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async editBannerDuration(req, res, next) {
+    const validationSchema = {
+      bannerDuration: Joi.number().required()
+    };
+    try {
+      const {bannerDuration} = await Joi.validate(req.body, validationSchema);
+      await userModel.findOneAndUpdate({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      }, {bannerDuration});
+      return res.json(
+          new response(null, responseMessage.UPDATE_SUCCESS)
+      );
+    } catch (e) {
+      next(e);
+    }
+  }
+
+  async editAppBannerDuration(req, res, next) {
+    const validationSchema = {
+      bannerAppDuration: Joi.number().required()
+    };
+    try {
+      const {bannerAppDuration} = await Joi.validate(req.body, validationSchema);
+      await userModel.findOneAndUpdate({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      }, {bannerAppDuration});
+      return res.json(
+          new response(null, responseMessage.UPDATE_SUCCESS)
+      );
+    } catch (e) {
+      next(e);
     }
   }
 
@@ -4817,6 +5026,43 @@ class adminController {
     }
   }
 
+  async changeAppBannerStatus(req, res, next) {
+    const validSchema = {
+      _id: Joi.string().required(),
+      status: Joi.string().valid(status.ACTIVE, status.BLOCK).required(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.body, validSchema);
+      let adminResult = await findUser({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!adminResult) {
+        return res.json(apiError.notFound(responseMessage.USER_NOT_FOUND));
+      }
+      let bannerResult = await findAppBanner({
+        _id: validatedBody._id,
+        status: { $ne: status.DELETE },
+      });
+      if (!bannerResult) {
+        return res.json(apiError.notFound(responseMessage.DATA_NOT_FOUND));
+      }
+      var result = await updateAppBanner(
+          { _id: bannerResult._id },
+          { status: validatedBody.status }
+      );
+      return res.json(
+          new response(
+              result,
+              validatedBody.status == status.BLOCK
+                  ? responseMessage.BLOCKED
+                  : responseMessage.UNBLOCKED
+          )
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
 }
 
 module.exports = new adminController();

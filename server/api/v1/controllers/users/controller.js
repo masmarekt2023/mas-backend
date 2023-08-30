@@ -98,6 +98,7 @@ const status = require("../../../../enums/status");
 const userType = require("../../../../enums/userType");
 const nftModel = require("../../../../models/nft");
 const bannerModel = require("../../../../models/banner");
+const bannerAppModel = require("../../../../models/bannerApplication");
 
 class userController {
     /**
@@ -427,7 +428,6 @@ class userController {
 
             const to = channel === "email" ? userResult.email : userResult.phone;
             const verify = await Twilio.checkVerification(to, otp);
-            console.log(verify);
             if (verify.status == "400") {
                 return res.json(
                     new response({verified: false}, "Email invalid", 400)
@@ -575,7 +575,6 @@ class userController {
                 "reset_password",
                 userResult.userName
             );
-            console.log("verifyEmail", verifyEmail);
             if (verifyEmail.status == 400) {
                 return res.json(
                     new response({email_verification_sent: false}, "Email invalid", 400)
@@ -650,7 +649,6 @@ class userController {
                 );
             }
             const verify = await Twilio.checkVerification(userResult.email, otp);
-            console.log("to", verify);
             if (verify.status == "400") {
                 return res.json(
                     new response({verified: false}, "Email invalid", 400)
@@ -1410,13 +1408,12 @@ class userController {
                     firstCommission = {},
                     userEarn = {};
                 var donationAmount = Bundle.donationAmount;
-
                 var commissionResult = await sortFee({
                     masHeld: {$lte: CreatorUser.masBalance},
                     status: status.ACTIVE,
                 });
                 var commissionFee =
-                    Number(donationAmount) * (commissionResult.contentCreatorFee / 100);
+                    Number(donationAmount) * (commissionResult ? commissionResult.contentCreatorFee : 1 / 100);
                 var nftDonationAmount = Number(donationAmount) - commissionFee;
 
                 updateQuery.$inc = {[balance]: Number(nftDonationAmount)};
@@ -1896,7 +1893,6 @@ class userController {
             const data = await updateAudience({_id: id}, updateObj);
             return res.json(new response(data, 'Edited successfully'));
         }catch (e) {
-            console.log(e);
             return next(e);
         }
     }
@@ -2912,7 +2908,24 @@ class userController {
         };
         try {
             const validatedBody = await Joi.validate(req.query, validationSchema);
-            const result = await bannerModel.paginate(validatedBody);
+            const result = await bannerModel.paginate({...validatedBody, status: 'ACTIVE'});
+            if (!result) {
+                return apiError.notFound(responseMessage.DATA_NOT_FOUND);
+            }
+            return res.json(new response(result, responseMessage.DATA_FOUND));
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    async listAppBanner(req, res, next) {
+        const validationSchema = {
+            page: Joi.number().optional(),
+            limit: Joi.number().optional(),
+        };
+        try {
+            const validatedBody = await Joi.validate(req.query, validationSchema);
+            const result = await bannerAppModel.paginate({...validatedBody, status: 'ACTIVE'});
             if (!result) {
                 return apiError.notFound(responseMessage.DATA_NOT_FOUND);
             }
@@ -3515,6 +3528,38 @@ class userController {
             return res.json(new response(subscription, responseMessage.DETAILS_FETCHED));
         } catch (error) {
             return next(error);
+        }
+    }
+
+    async getBannerDuration(req, res, next) {
+        try {
+            let adminResult = await findUser({
+                userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+            });
+            if (!adminResult) {
+                return apiError.notFound(responseMessage.USER_NOT_FOUND);
+            }
+            return res.json(
+                new response(adminResult.bannerDuration, responseMessage.DATA_FOUND)
+            );
+        } catch (e) {
+            next(e);
+        }
+    }
+
+    async getAppBannerDuration(req, res, next) {
+        try {
+            let adminResult = await findUser({
+                userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+            });
+            if (!adminResult) {
+                return apiError.notFound(responseMessage.USER_NOT_FOUND);
+            }
+            return res.json(
+                new response(adminResult.bannerAppDuration, responseMessage.DATA_FOUND)
+            );
+        } catch (e) {
+            next(e);
         }
     }
 }

@@ -365,7 +365,6 @@ class nftController {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
       let dataResults = await myNftPaginateSearch(validatedBody ,userResult._id,);
-      console.log(dataResults)
       /*if (dataResults.length == 0) {
         throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
       }*/

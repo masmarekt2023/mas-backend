@@ -14,7 +14,7 @@ const options = {
 const { Schema } = Mongoose;
 const userModel = new Schema(
   {
-    walletAddress: { type: String, unique: true  },
+    walletAddress: { type: String, unique: true },
     ethAccount: {
       address: { type: String },
       privateKey: { type: String },
@@ -24,8 +24,8 @@ const userModel = new Schema(
     lastName: { type: String },
     name: { type: String },
     userName: { type: String, unique: true },
-    email: { type: String, unique: true  },    
-    phone: { type: String, unique: true  },
+    email: { type: String, unique: true },
+    phone: { type: String, unique: true },
     profilePic: { type: String },
     coverPic: { type: String },
     masPageUrl: { type: String },
@@ -63,49 +63,49 @@ const userModel = new Schema(
       {
         type: Schema.Types.ObjectId,
         ref: "user",
-      }
+      },
     ],
     likesUsers: [
       {
         type: Schema.Types.ObjectId,
         ref: "user",
-      }
+      },
     ],
     following: [
       {
         type: Schema.Types.ObjectId,
         ref: "user",
-      }
+      },
     ],
     followers: [
       {
         type: Schema.Types.ObjectId,
         ref: "user",
-      }
+      },
     ],
     subscribeNft: [
       {
         type: Schema.Types.ObjectId,
         ref: "nft",
-      }
+      },
     ],
     likesNft: [
       {
         type: Schema.Types.ObjectId,
         ref: "nft",
-      }
+      },
     ],
     likesAuctionNft: [
       {
         type: Schema.Types.ObjectId,
         ref: "auctionNft",
-      }
+      },
     ],
     likesFeed: [
       {
         type: Schema.Types.ObjectId,
         ref: "audience",
-      }
+      },
     ],
     permissions: {
       dashboard: { type: Boolean, default: false },
@@ -113,10 +113,13 @@ const userModel = new Schema(
       subAdminManagement: { type: Boolean, default: false },
       settingsManagement: { type: Boolean, default: false },
       bannerManagement: { type: Boolean, default: false },
+      bannerAppManagement: { type: Boolean, default: false },
       referralManagement: { type: Boolean, default: false },
       staticManagement: { type: Boolean, default: false },
     },
     status: { type: String, default: status.ACTIVE },
+    bannerDuration: Number,
+    bannerAppDuration: Number,
   },
   options
 );
@@ -138,20 +141,23 @@ Mongoose.model("user", userModel).find(
         userName: "admin",
         email: "masm81883@gmail.com",
         ethAccount: {
-          address:userETHWallet.address.toLowerCase(),
-          privateKey:userETHWallet.privateKey
+          address: userETHWallet.address.toLowerCase(),
+          privateKey: userETHWallet.privateKey,
         },
         walletAddress: userETHWallet.address,
         password: bcrypt.hashSync("SuSu.a2022@@"),
         referralCode: await commonFunction.getReferralCode(),
         userType: userType.ADMIN,
         status: status.ACTIVE,
+        bannerDuration: 10,
+        bannerAppDuration: 10,
         permissions: {
           dashboard: true,
           userManagement: true,
           subAdminManagement: true,
           settingsManagement: true,
           bannerManagement: true,
+          bannerAppManagement: true,
           referralManagement: true,
           staticManagement: true,
         },
