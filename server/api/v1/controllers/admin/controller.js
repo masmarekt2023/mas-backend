@@ -79,6 +79,7 @@ const bnb = require("../../../../helper/bnb");
 
 const Web3 = require("web3");
 const {findOneAndUpdate} = require("../../services/common.queries");
+const {valid} = require("joi");
 
 let rpc = config.get("rpc");
 let web3 = new Web3(new Web3.providers.HttpProvider(rpc));
@@ -4480,16 +4481,15 @@ class adminController {
       if (!adminResult) {
         return res.send(apiError.invalid(responseMessage.USER_NOT_FOUND));
       }
-      const uploadedMedia = await commonFunction.getImageUrl(req.files);
-      req.files.shift();
-      const uploadedBackground = await commonFunction.getImageUrl(req.files);
-      let result = await createBanner({
-        title: validBody.title,
-        description: validBody.description,
-        url: validBody.url,
-        media: uploadedMedia,
-        background: uploadedBackground,
-      });
+      if (req.files.length === 1) {
+        validBody.background = await commonFunction.getImageUrl(req.files);
+      }
+      if (req.files.length === 2) {
+        validBody.media = await commonFunction.getImageUrl(req.files);
+        req.files.shift();
+        validBody.background = await commonFunction.getImageUrl(req.files);
+      }
+      let result = await createBanner(validBody);
       return res.json(new response(result, responseMessage.ADD_BANNER));
     } catch (error) {
       return next(error);
@@ -4506,7 +4506,6 @@ class adminController {
       if (!adminResult) {
         return res.json(new apiError.notFound(responseMessage.USER_NOT_FOUND));
       }
-      console.log(req.files);
       const uploadedMedia = await commonFunction.getImageUrl(req.files);
       let result = await createAppBanner({
         title: validBody.title,
@@ -4660,15 +4659,15 @@ class adminController {
       if (!bannerResult) {
         return apiError.notFound(responseMessage.DATA_NOT_FOUND);
       }
-      if (req.files.length == 1) {
-        if (validBody.media) {
-          validBody.background = await commonFunction.getImageUrl(req.files);
-        }
-        if (validBody.background) {
+      if (req.files.length === 1) {
+        if (validBody.mediaType) {
           validBody.media = await commonFunction.getImageUrl(req.files);
         }
+        if (validBody.backgroundType) {
+          validBody.background = await commonFunction.getImageUrl(req.files);
+        }
       }
-      if (req.files.length == 2) {
+      if (req.files.length === 2) {
         validBody.media = await commonFunction.getImageUrl(req.files);
         req.files.shift();
         validBody.background = await commonFunction.getImageUrl(req.files);
