@@ -13,6 +13,7 @@ const schemaDefination = new Schema(
     title: { type: String },
     description: { type: String },
     contentFile: { type: String },
+    background: {type: String},
     contents: [
       {
         heading: { type: String },
@@ -28,7 +29,7 @@ module.exports = Mongoose.model("landing_content", schemaDefination);
 Mongoose.model("landing_content", schemaDefination).find({}, (err, result) => {
   if (err) {
     console.log("Default landing content error", err);
-  } else if (result.length != 0) {
+  } else if (result.length !== 0) {
     console.log("Default landing content");
   } else {
     var obj = {

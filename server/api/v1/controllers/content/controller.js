@@ -2,8 +2,11 @@ const Joi = require("joi");
 const response = require("../../../../../assets/response");
 const responseMessage = require("../../../../../assets/responseMessage");
 const { contentServices } = require("../../services/content");
-const { findContent, updateContent, contentList } = contentServices;
+const { findContent, updateContent } =
+  contentServices;
 const commonFunction = require("../../../../helper/util");
+const contentModel = require("../../../../models/content");
+const status = require("../../../../enums/status");
 
 class contentController {
   /**
@@ -64,26 +67,48 @@ class contentController {
    *         description: Returns success message
    */
 
-  async editContent(req, res, next) {
+  async createContent(req, res, next) {
     const validationSchema = {
-      _id: Joi.string().required(),
-      title: Joi.string().optional(),
-      description: Joi.string().optional(),
-      contentFile: Joi.string().optional(),
-      contents: Joi.array().items(
-        Joi.object().keys({
-          heading: Joi.string().required(),
-          contentDescription: Joi.string().required(),
-        })
-      ).optional(),
+      title: Joi.string().optional().allow(""),
+      description: Joi.string().optional().allow(""),
+      contentFile: Joi.string().optional().allow(""),
+      background: Joi.string().optional().allow(""),
+      contents: Joi.any(),
     };
     try {
       const validatedBody = await Joi.validate(req.body, validationSchema);
-      var result = await updateContent(
-        { _id: validatedBody._id },
-        validatedBody
-      );
+      for (let file of req.files) {
+        validatedBody[file.fieldname] = await commonFunction.getFileUrlOnPhone(
+          file.path
+        );
+      }
+      validatedBody.contents = JSON.parse(validatedBody.contents);
+      const result = await contentModel.create(validatedBody);
       return res.json(new response(result, responseMessage.UPDATE_SUCCESS));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async editContent(req, res, next) {
+    const validationSchema = {
+      _id: Joi.string().required(),
+      title: Joi.string().optional().allow(""),
+      description: Joi.string().optional().allow(""),
+      contentFile: Joi.string().optional().allow(""),
+      background: Joi.string().optional().allow(""),
+      contents: Joi.any(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.body, validationSchema);
+      for (let file of req.files) {
+        validatedBody[file.fieldname] = await commonFunction.getFileUrlOnPhone(
+          file.path
+        );
+      }
+      validatedBody.contents = JSON.parse(validatedBody.contents);
+      await updateContent({ _id: validatedBody._id }, validatedBody);
+      return res.json(new response(null, responseMessage.UPDATE_SUCCESS));
     } catch (error) {
       return next(error);
     }
@@ -105,8 +130,33 @@ class contentController {
 
   async landingContentList(req, res, next) {
     try {
-      var result = await contentList();
+      const result = await contentModel.find({
+        status: { $ne: status.DELETE },
+      });
       return res.json(new response(result, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async updateContentStatus(req, res, next) {
+    const validationSchema = {
+      id: Joi.string().required(),
+      status: Joi.string().valid("ACTIVE", "BLOCK", "DELETE").required(),
+    };
+    try {
+      const { id, status } = await Joi.validate(req.body, validationSchema);
+      await contentModel.findByIdAndUpdate(id, { status: status });
+
+      const resMessage = `Section ${
+        status === "BLOCK"
+          ? "Blocked"
+          : status === "DELETE"
+          ? "Deleted"
+          : "Active"
+      } Successfully`;
+
+      return res.json(new response(null, resMessage));
     } catch (error) {
       return next(error);
     }

@@ -12,4 +12,6 @@ module.exports = Express.Router()
   .post("/uploadFile", controller.uploadFile)
 
   .use(auth.verifyToken)
-  .put("/content", controller.editContent);
+  .post("/content", controller.createContent)
+  .put("/content", controller.editContent)
+  .put("/updateContentStatus", controller.updateContentStatus);

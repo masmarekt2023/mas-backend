@@ -12,6 +12,10 @@ const contentServices = {
   contentList: async () => {
     return await contentModel.find({});
   },
+
+  createContent: async (doc) => {
+    return await contentModel.create(doc);
+  },
 };
 
 module.exports = { contentServices };
