@@ -213,9 +213,7 @@ class userController {
                 password: bcrypt.hashSync(password),
                 referralCode: await commonFunction.getReferralCode(),
                 userType: userType.CREATOR,
-                speciality: "",
-                profilePic: "",
-                coverPic: "",
+
             };
 
             if (referralCode) {

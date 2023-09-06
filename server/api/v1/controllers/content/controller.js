@@ -2,8 +2,7 @@ const Joi = require("joi");
 const response = require("../../../../../assets/response");
 const responseMessage = require("../../../../../assets/responseMessage");
 const { contentServices } = require("../../services/content");
-const { findContent, updateContent } =
-  contentServices;
+const { findContent, updateContent } = contentServices;
 const commonFunction = require("../../../../helper/util");
 const contentModel = require("../../../../models/content");
 const status = require("../../../../enums/status");
@@ -70,6 +69,7 @@ class contentController {
   async createContent(req, res, next) {
     const validationSchema = {
       title: Joi.string().optional().allow(""),
+      type: Joi.string().valid("flexible", "static").required(),
       description: Joi.string().optional().allow(""),
       contentFile: Joi.string().optional().allow(""),
       background: Joi.string().optional().allow(""),
@@ -132,6 +132,19 @@ class contentController {
     try {
       const result = await contentModel.find({
         status: { $ne: status.DELETE },
+        type: "flexible"
+      });
+      return res.json(new response(result, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async staticContentList(req, res, next) {
+    try {
+      const result = await contentModel.find({
+        status: { $ne: status.DELETE },
+        type: "static"
       });
       return res.json(new response(result, responseMessage.DATA_FOUND));
     } catch (error) {

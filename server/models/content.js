@@ -6,14 +6,14 @@ const options = {
   timestamps: true,
 };
 
-const {Schema} = Mongoose;
+const { Schema } = Mongoose;
 const schemaDefination = new Schema(
   {
     type: { type: String },
     title: { type: String },
     description: { type: String },
     contentFile: { type: String },
-    background: {type: String},
+    background: { type: String },
     contents: [
       {
         heading: { type: String },
@@ -33,7 +33,7 @@ Mongoose.model("landing_content", schemaDefination).find({}, (err, result) => {
     console.log("Default landing content");
   } else {
     var obj = {
-      type: "solution",
+      type: "flexible",
       title: "Our Solutions",
       contentFile:
         "https://res.cloudinary.com/mobiloittetech/image/upload/v1653894513/xrewqjkndvzeivupywqk.png",
@@ -41,7 +41,7 @@ Mongoose.model("landing_content", schemaDefination).find({}, (err, result) => {
         "The MAS platform takes the traditional instituons of patronage donations to the next level. In it , individuals that wish to support certain content creator (called cliens, can connect with those content creators (called MAS) and financially contribute with specific projects or make generic donations to specific creators. Unlike generic crowdfunding platforms, the MAS platform will enable and faster close and personal relationship.",
     };
     var obj2 = {
-      type: "howItWorks",
+      type: "flexible",
       title: "How It Works",
       contentFile:
         "https://res.cloudinary.com/mobiloittetech/image/upload/v1653894556/mehbmf56lywah4lpbbar.png",
@@ -66,9 +66,39 @@ Mongoose.model("landing_content", schemaDefination).find({}, (err, result) => {
       ],
     };
 
+    const bundles = {
+      type: "static",
+      title: "Bundles",
+      contentFile: "",
+      background: "",
+      description: "",
+      contents: [],
+    };
+
+    const users = {
+      type: "static",
+      title: "Users",
+      contentFile: "",
+      background: "",
+      description: "",
+      contents: [],
+    };
+
+    const nft = {
+      type: "static",
+      title: "NFT",
+      contentFile: "",
+      background: "",
+      description: "",
+      contents: [],
+    };
+
     Mongoose.model("landing_content", schemaDefination).create(
       obj,
       obj2,
+      users,
+      bundles,
+      nft,
       (contentErr, contentResult) => {
         if (contentErr) {
           console.log("Landing content error.", contentErr);

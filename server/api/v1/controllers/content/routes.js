@@ -7,6 +7,7 @@ module.exports = Express.Router()
 
   .get("/content", controller.viewContent)
   .get("/landingContentList", controller.landingContentList)
+  .get("/staticContentList", controller.staticContentList)
 
   .use(upload.uploadFile)
   .post("/uploadFile", controller.uploadFile)

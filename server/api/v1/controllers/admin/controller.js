@@ -4512,6 +4512,7 @@ class adminController {
         description: validBody.description,
         url: validBody.url,
         media: uploadedMedia,
+        mediaType: validBody.mediaType
       });
       return res.json(new response(result, responseMessage.ADD_BANNER));
     } catch (error) {
