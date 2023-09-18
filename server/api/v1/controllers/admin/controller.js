@@ -357,7 +357,7 @@ class adminController {
       if (!userResult) {
         return res.json(new response({}, responseMessage.USER_NOT_FOUND), 404);
       }
-      if (password !== userResult.password) {
+      if (!bcrypt.compareSync(password, userResult.password)) {
         return res.json(new response({}, responseMessage.INCORRECT_LOGIN), 401);
       }
       let token = await commonFunction.getToken({

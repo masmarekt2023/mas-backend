@@ -29,9 +29,9 @@ module.exports = {
         },
     },
     cloudinary: {
-        cloud_name: "ddb3zaaxs",
-        api_key: "976343435798946",
-        api_secret: "xOyU3SMxkCfzrkTZrCENyGUbmVo",
+        cloud_name: "marvelouse-agency-of-support",
+        api_key: "455723237167783",
+        api_secret: "EBn5oevs8bEBCLj6J5_UdtPhGmk",
     },
     twilio: {
         account_sid: "ACed6cc81fbc237b2517f021bd04f7ff05",

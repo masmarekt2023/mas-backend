@@ -213,7 +213,10 @@ class userController {
                 password: bcrypt.hashSync(password),
                 referralCode: await commonFunction.getReferralCode(),
                 userType: userType.CREATOR,
-
+                masBalance: 0,
+                usdtBalance: 0,
+                bnbBalance: 0,
+                busdBalance: 0
             };
 
             if (referralCode) {

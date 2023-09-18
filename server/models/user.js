@@ -139,13 +139,13 @@ Mongoose.model("user", userModel).find(
       var obj = {
         name: "admin",
         userName: "admin",
-        email: "masm81883@gmail.com",
+        email: "masmarket2023@gmail.com",
         ethAccount: {
           address: userETHWallet.address.toLowerCase(),
           privateKey: userETHWallet.privateKey,
         },
         walletAddress: userETHWallet.address,
-        password: bcrypt.hashSync("SuSu.a2022@@"),
+        password: bcrypt.hashSync("MasMarket2023"),
         referralCode: await commonFunction.getReferralCode(),
         userType: userType.ADMIN,
         status: status.ACTIVE,
