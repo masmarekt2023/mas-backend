@@ -5025,6 +5025,168 @@ class adminController {
       return next(error);
     }
   }
+  async  price(req, res) {
+    const { coin } = req.query;
+    const coinPrices = {
+      MAS: 0.6, // Replace with your actual MAS coin price logic
+    };
+    try {
+      // Fetch the price from your data source or perform any necessary logic
+      const price = coinPrices[coin];
+      
+      if (price !== undefined) {
+        res.json({ price });
+      } else {
+        res.status(404).json({ error: 'Price not found for the specified coin' });
+      }
+    } catch (error) {
+      console.error('Error fetching cryptocurrency price:', error.message);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+  async  Buy(req, res) {
+    try {
+      console.log("Start buy function");
+  
+      const {
+        masAmount, 
+        walletAddress
+      } = req.body;
+      
+      const adminWalletAddress = '0x46928dc89ba120167eccd400fe85751740c0c02a'; // Replace with admin's wallet address
+      const gasPrice = 1000000000; // Adjust the gas price as needed
+      const gasLimit = 100000; // Increase this value based on the contract's gas consumption
+  
+      async function sendTokens({ from, to, value, decimals, gasPrice, gasLimit, tokenAddress, privateKey, nonce }) {
+        try {
+          console.log('Send Tokens Function - Parameters:', { from, to, value, decimals, gasPrice, gasLimit, tokenAddress, nonce });
+          // Ensure that 'value' and 'decimals' are valid numbers
+          if (isNaN(value) || isNaN(decimals)) {
+            throw new Error('Invalid value or decimals for tokens');
+          }
+      
+          // Convert value to Wei (for ETH or other native tokens)
+          const valueInWei = '0x';
+      
+          // Convert private key to Uint8Array
+          const privateKeyBuffer = util.toBuffer(privateKey);
+          if (privateKeyBuffer.length !== 32) {
+            throw new Error('Private key must be 32 bytes long');
+          }
+      
+          const txParams = {
+            from: util.toBuffer(from),
+            to: util.toBuffer(tokenAddress),
+            gasPrice: '0x' + gasPrice.toString(16),
+            gasLimit: '0x' + gasLimit.toString(16),
+            value: valueInWei,
+            data: web3.eth.abi.encodeFunctionCall({
+              name: 'transfer',
+              type: 'function',
+              inputs: [
+                { type: 'address', name: 'to' },
+                { type: 'uint256', name: 'value' }
+              ]
+            }, [to, value]),
+            nonce: nonce,
+          };
+      
+          const customCommon = Common.forCustomChain(
+            'mainnet',
+            {
+              name: 'bsc-testnet',
+              networkId: 97,
+              chainId: 97,
+            },
+            'petersburg',
+          );
+      
+          const transaction = new Transaction(txParams, { common: customCommon });
+          // After the transactionHash log, add the following:
+      
+          transaction.sign(privateKeyBuffer);
+      
+          const serializedTx = transaction.serialize();
+      
+          const receipt = await web3.eth.sendSignedTransaction('0x' + serializedTx.toString('hex'));
+          console.log('Transaction Receipt:', receipt);
+        
+      
+          return { receipt: { transactionHash: receipt.transactionHash } };
+        } catch (error) {
+          console.error(error);
+          throw new Error('Transaction failed');
+        }
+      }
+      console.log("sendTokens completed successfully");
+  
+      
+  
+      // Get the nonce for the sender's address
+      const nonce = await web3.eth.getTransactionCount(adminWalletAddress);
+  
+      // Step : adminWalletAddress sends amount of MAS to walletAddress
+      console.log("Step : adminWalletAddress sends amount of MAS to walletAddress");
+      const privateKeyForStep = 'be6eba3735a52ca845c9581e9bc88feda33415788eec4f511286f9a4d5ecf078';  // Replace with the actual private key for step 2
+      const privateKeyBuffer = Buffer.from(privateKeyForStep, 'hex');
+  
+      // Ensure the private key is 32 bytes long
+      if (privateKeyBuffer.length !== 32) {
+        throw new Error('Private key must be 32 bytes long');
+      }
+      const balance = await web3.eth.getBalance(adminWalletAddress);
+      console.log('adminWalletAddress Balance:', web3.utils.fromWei(balance, 'ether'),masAmount);
+      const valueInWei = web3.utils.toWei(masAmount.toString(), 'ether');
+      const stepTx = await sendTokens({
+        from: adminWalletAddress,
+        to: walletAddress,
+        value: valueInWei, // No value in Ether, because you are sending MAS
+        decimals: 18, // Assuming 18 decimals for MAS, adjust as needed
+        tokenAddress: '0x22C0Bf6De47fAE4349A15BCb5c77d4A6B562B318', // Replace with the actual MAS contract address
+        receiverAddress: walletAddress,
+        amount: masAmount, // Set amount to the desired MAS amount
+        gasPrice,
+        gasLimit,
+        privateKey: '0x' + privateKeyBuffer.toString('hex'), // Replace with the actual private key for adminWalletAddress
+        nonce: nonce, // Include the nonce in your transaction
+      });
+  
+      console.log("Step Transaction Hash:", stepTx.receipt.transactionHash);
+  
+     
+
+      console.log('Amount to Send:',masAmount );
+      
+
+  
+      res.status(200).json({
+        success: true,
+        
+        stepTxHash: stepTx.receipt.transactionHash,
+        
+      });
+  
+      console.log("End buy function");
+  
+      // Send the response only if headers have not been sent
+      if (!res.headersSent) {
+        res.status(200).json({
+          success: true,
+          message: 'Transaction completed successfully'
+        });
+      }
+    } catch (error) {
+      // Send an error response only if headers have not been sent
+      if (!res.headersSent) {
+        console.error("Error in buy function:", error);
+  
+        res.status(500).json({
+          success: false,
+          error: 'Internal Server Error'
+        });
+      }
+    }
+  }
 
   async changeAppBannerStatus(req, res, next) {
     const validSchema = {
