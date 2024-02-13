@@ -2,7 +2,7 @@ const Express = require("express");
 const controller = require("./controller");
 const auth = require("../../../../helper/auth");
 const upload = require("../../../../helper/uploadHandler");
-
+const matchFaces = require("./controller");
 module.exports = Express.Router()
     .post("/sendOtpRegister", controller.sendOtpRegister)
     .post("/register", controller.register)
@@ -35,6 +35,13 @@ module.exports = Express.Router()
     .get("/nftTransactionList", controller.nftTransactionList)
     .get("/myTransactionHistory", controller.myTransactionHistory)
     .get("/userAllDetails/:_id", controller.userAllDetails)
+    .put("/updateProfile", controller.updateProfile)
+    .delete("/deleteProfile", controller.deleteProfile)
+    .put("/deactivateProfile", controller.deactivateProfile)
+    //.put("/processing", controller.matchFaces)
+    //.put("/processing", controller.loadModels)
+    
+    .put("/processing", controller.main)
     .get("/subscribeNow/:nftId", controller.subscribeNow)
     .get("/followProfile/:userId", controller.followProfile)
     .get("/profileFollowersList", controller.profileFollowersList)
