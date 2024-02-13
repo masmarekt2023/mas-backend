@@ -18,6 +18,8 @@ module.exports = Express.Router()
   .get("/listSocial", controller.listSocial)
   .get("/banner", controller.viewBanner)
   .get("/bannerApp", controller.viewAppBanner)
+  .get("/price", controller.price)
+  
 
   .use(auth.verifyToken)
   .post("/addAdmin", controller.addAdmin)
