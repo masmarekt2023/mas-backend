@@ -1,179 +1,221 @@
 const express = require("express");
-const Mongoose = require("mongoose");
+const mongoose = require("mongoose");
 const http = require("http");
-const {Server} = require("socket.io");
+const { Server } = require("socket.io");
 const morgan = require('morgan');
 const cors = require("cors");
 const auth = require("./helper/auth");
+const multer = require('multer');
+const path = require('path');
 
-/*const firebase = require("firebase-admin");
-
-var serviceAccount = require("./../firebase/mas-platform-c012-firebase-adminsdk-cs7u5-c3cb636533.json");
-
-firebase.initializeApp({
-  credential: firebase.credential.cert(serviceAccount)
-});*/
-
-const {chatServices} = require("./api/v1/services/chat");
-const {messageServices} = require("./api/v1/services/message");
-const {notificationServices} = require("./api/v1/services/notification");
-
+const { chatServices } = require("./api/v1/services/chat");
+const { messageServices } = require("./api/v1/services/message");
+const { notificationServices } = require("./api/v1/services/notification");
 const DepositController = require("./api/v1/controllers/blockchain/deposit");
 const WithdrawCron = require("./cronJob/processAprrovedWithdrawals");
 const DepositCron = require("./cronJob/processConfirmedDeposits");
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-    cors: {
-        origin: '*'
-    }
+const io = new Server(this.server, {
+  cors: {
+    origin: '*'
+  }
 });
 
 
 class ExpressServer {
-    constructor() {
-        app.use(express.json());
-        app.use(express.urlencoded({extended: true}));
-        app.use(cors());
-        app.disable('etag');
-        app.use(morgan('tiny'));
-    }
+  constructor() {
+    this.app = express();
+    this.server = http.createServer(this.app);
+    this.io = new Server(this.server, {
+      cors: {
+        origin: '*'
+      }
+    });
 
-    router(routes) {
-        routes(app);
-        return this;
-    }
+    this.configureServer();
+  }
 
-    configureDb(dbUrl) {
-        return new Promise((resolve, reject) => {
-            Mongoose.connect(
-                dbUrl,
-                {
-                    useNewUrlParser: true,
-                    useUnifiedTopology: true,
-                    useFindAndModify: false
-                },
-                (err) => {
-                    if (err) {
-                        console.log(`Error in mongodb connection ${err.message}`);
-                        return reject(err);
-                    }
-                    console.log("Mongodb connection established");
+  configureServer() {
+    // Configure middleware
+    this.app.use(express.json());
+    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(cors());
+    this.app.disable('etag');
+    this.app.use(morgan('tiny'));
 
-                    return resolve(this);
-                }
-            );
-        });
-    }
+    // Serve the React app (build) - assuming React app is in the 'build' folder
+    this.app.use(express.static(path.join(__dirname, 'build')));
 
-    listen(port) {
-        server.listen(port, () => {
-            console.log(
-                `secure app is listening @port ${port}`,
-                new Date().toLocaleString()
-            );
-        });
-        return app;
-    }
-}
+    // Set up Multer to handle file uploads
+    const storage = multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, 'uploads/'); // Save files to the 'uploads' directory
+      },
+      filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`);
+      },
+    });
 
-const socketLogin = async (socket, next) => {
-    const token = socket.handshake.auth.token;
+    this.upload = multer({ storage });
+
+    // Handle file upload endpoints
+    this.configureFileUpload('/upload/document1', 'document1');
+    this.configureFileUpload('/upload/document2', 'document2');
+    this.configureFileUpload('/uploadImage', 'image');
+  }
+
+  configureFileUpload(endpoint, field) {
+    // Now use this.upload instead of upload
+    this.app.post(endpoint, this.upload.single(field), (req, res) => {
+      console.log('Req Body:', req.body);
+      console.log(`Req File ${field}:`, req.file);
+
+      const uploadedFile = req.file;
+      console.log(`${field} uploaded:`, uploadedFile);
+      // Handle further processing or save the file information to a database
+      res.json({ message: `${field} uploaded successfully` });
+    });
+  }
+
+  router(routes) {
+    // Configure routes
+    routes(this.app);
+    return this;
+  }
+
+  async configureDb(dbUrl) {
+    // Configure MongoDB connection
     try {
-        if (token) {
-            const user = await auth.verifyTokenBySocket(token);
-            if (user) {
-                socket.userID = user._id;
-                socket.userName = user.userName;
-            }
-        } else {
-            return next(new Error("Please Login"));
-        }
-    } catch (err) {
-        return next(new Error("unauthorized"));
+      await mongoose.connect(dbUrl, {
+        useNewUrlParser: true,
+        useUnifiedTopology: true,
+        useFindAndModify: false
+      });
+      console.log("MongoDB connection established");
+      return this;
+    } catch (error) {
+      console.log(`Error in MongoDB connection: ${error.message}`);
+      throw error;
     }
+  }
 
+  listen(port) {
+    // Start listening on the specified port
+    this.server.listen(port, () => {
+      console.log(`Secure app is listening @port ${port}`, new Date().toLocaleString());
+    });
+    return this.app;
+  }
+
+  socketLogin(socket, next) {
+    // Handle socket authentication logic
     next();
+  }
+  start() {
+    // Start cron jobs
+    WithdrawCron.start();
+    DepositCron.start();
+    DepositController.start();
+    return this;
+  }
+  
 }
 
+// Socket login middleware
+const socketLogin = async (socket, next) => {
+  try {
+    if (token) {
+      const user = await auth.verifyTokenBySocket(token);
+      if (user) {
+        socket.userID = user._id;
+        socket.userName = user.userName;
+      }
+    } else {
+      return next(new Error("Please Login"));
+    }
+  } catch (err){
+    return next(new Error("unauthorized"));
+  }
+  next();
+};
+
+// Configure socket authentication
 io.use(socketLogin);
 
 
 global.NotifySocket = io.of("/notifications");
 NotifySocket.use(socketLogin);
 NotifySocket.on("connection", async (socket) => {
-    const user = socket.userID.toString();
-    socket.join(user);
-    let unread = await notificationServices.notificationList({
-        userId: user,
-        status: {$ne: 'DELETE'},
-        isRead: false,
-    });
-    if (unread && unread.length > 0) {
-        NotifySocket.to(user).emit('notification', unread);
-    }
-    socket.on("error", (err) => {
-        socket.disconnect();
-    });
+  const user = socket.userID.toString();
+  socket.join(user);
+  let unread = await notificationServices.notificationList({
+    userId: user,
+    status: { $ne: 'DELETE' },
+    isRead: false,
+  });
+  if(unread && unread.length > 0){
+    NotifySocket.to(user).emit('notification', unread);
+  }
+  socket.on("error", (err) => {
+    socket.disconnect();
+  });
 });
 
 global.onlineUsers = new Map();
 
 io.sockets.on("connection", async (socket) => {
-    const user = socket.userID.toString();
-    console.log('new connection', socket.userName);
+  const user = socket.userID.toString();
+  console.log('new connection', socket.userName);
+  console.log('online users', onlineUsers.size, [...onlineUsers.keys()])
+
+  if (onlineUsers.has(user)) {
+    onlineUsers.set(user, onlineUsers.get(user).add(socket.id));
+  } else {
+    onlineUsers.set(user, new Set([socket.id]));
+    io.emit("notify", { onlineusers: [...onlineUsers.keys()] });
+  }
+
+  let joinChats = await chatServices.chatList(socket.userID, {});
+  for (chat in joinChats) {
+    socket.join(joinChats[chat]._id.toString())
+  }
+
+  socket.on("sendMsg", async (data) => {
+    if (!socket.rooms.has(data.chat_id.toString())) {
+      socket.join(data.chat_id.toString());
+    }
+    let msg = await messageServices.createMsg({
+      chat: data.chat_id,
+      sender: socket.userID,
+      text: data.message,
+      mediaType: data.mediaType || 'text'
+    });
+    io.to(data.chat_id).emit(data.chat_id, msg);
+  });
+
+  socket.on("ping", () => {
+    io.to(socket.id).emit("notify", { onlineusers: [...onlineUsers.keys()] });
+  });
+
+  socket.on("disconnecting", () => {
+    console.log(socket.rooms, 'disconnecting'); // the Set contains at least the socket ID
+  });
+
+  socket.on("disconnect", async () => {
+    console.log(socket.userName, 'disconnect');
+    onlineUsers.get(user).delete(socket.id);
+    if (onlineUsers.get(user).size == 0) {
+      onlineUsers.delete(user);
+      io.emit("notify", { onlineusers: [...onlineUsers.keys()] });
+    }
     console.log('online users', onlineUsers.size, [...onlineUsers.keys()])
+  });
 
-    if (onlineUsers.has(user)) {
-        onlineUsers.set(user, onlineUsers.get(user).add(socket.id));
-    } else {
-        onlineUsers.set(user, new Set([socket.id]));
-        io.emit("notify", {onlineusers: [...onlineUsers.keys()]});
-    }
-
-    let joinChats = await chatServices.chatList(socket.userID, {});
-    for (chat in joinChats) {
-        socket.join(joinChats[chat]._id.toString())
-    }
-
-    socket.on("sendMsg", async (data) => {
-        if (!socket.rooms.has(data.chat_id.toString())) {
-            socket.join(data.chat_id.toString());
-        }
-        let msg = await messageServices.createMsg({
-            chat: data.chat_id,
-            sender: socket.userID,
-            text: data.message,
-            mediaType: data.mediaType || 'text'
-        });
-        io.to(data.chat_id).emit(data.chat_id, msg);
-    });
-
-    socket.on("ping", () => {
-        io.to(socket.id).emit("notify", {onlineusers: [...onlineUsers.keys()]});
-    });
-
-    socket.on("disconnecting", () => {
-        console.log(socket.rooms, 'disconnecting'); // the Set contains at least the socket ID
-    });
-
-    socket.on("disconnect", async () => {
-        console.log(socket.userName, 'disconnect');
-        onlineUsers.get(user).delete(socket.id);
-        if (onlineUsers.get(user).size == 0) {
-            onlineUsers.delete(user);
-            io.emit("notify", {onlineusers: [...onlineUsers.keys()]});
-        }
-        console.log('online users', onlineUsers.size, [...onlineUsers.keys()])
-    });
-
-    socket.on("error", (err) => {
-        socket.disconnect();
-    });
+  socket.on("error", (err) => {
+    socket.disconnect();
+  });
 
 });
-
 WithdrawCron.start();
 DepositCron.start();
 DepositController.start();
