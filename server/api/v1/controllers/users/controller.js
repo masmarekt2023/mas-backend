@@ -30,6 +30,8 @@ const {
     latestUserListWithPagination,
     createUser,
     findUser,
+    deleteUserBy_Id,
+    deactivateUser,
     findUserData,
     updateUser,
     updateUserById,
@@ -99,6 +101,18 @@ const userType = require("../../../../enums/userType");
 const nftModel = require("../../../../models/nft");
 const bannerModel = require("../../../../models/banner");
 const bannerAppModel = require("../../../../models/bannerApplication");
+const faceapi = require('face-api.js');
+const canvas = require('canvas');
+const path = require('path');
+const tf = require('@tensorflow/tfjs-node');
+tf.setBackend('tensorflow');
+const { Canvas,ImageData } = canvas;
+const imageSize = require('image-size');
+
+const sizeOf = require('image-size');
+const { createCanvas, loadImage } = require('canvas');
+const { image } = require('image-js');
+const { Readable } = require('readable-stream');
 
 class userController {
     /**
@@ -1269,6 +1283,41 @@ class userController {
             return next(error);
         }
     }
+    async deleteProfile(req, res, next) {
+        try {
+          // Assuming you have a function to find the user by ID
+          let userResult = await deleteUserBy_Id({ _id: req.userId });
+          
+          if (!userResult) {
+            return apiError.notFound(responseMessage.USER_NOT_FOUND);
+          }
+      
+          // Assuming you have a function to delete the user by ID
+          await deleteUserBy_Id(userResult._id);
+      
+          return res.json(new response(null, responseMessage.PROFILE_DELETED));
+        } catch (error) {
+          return next(error);
+        }
+      }
+    
+      async deactivateProfile(req, res, next) {
+        try {
+          let userResult = await deactivateUser({ _id: req.userId });
+      
+          if (!userResult) {
+            return apiError.notFound(responseMessage.USER_NOT_FOUND);
+          }
+      
+          // Add logic to update the user's profile to deactivate it
+          // Example: Set user.isActive to false in the database
+          await updateUserById(userResult._id, { isActive: false });
+      
+          return res.json(new response({}, responseMessage.PROFILE_DEACTIVATED));
+        } catch (error) {
+          return next(error);
+        }
+      }
 
     /**
      * @swagger
@@ -3563,6 +3612,45 @@ class userController {
             next(e);
         }
     }
+    async main() {
+        try {
+          const uploadsDirectory = './uploads';
+          
+          // Read all files in the 'uploads' directory
+          const files = fs.readdirSync(uploadsDirectory);
+      
+          // Filter only image files (you may want to adjust the filter based on your image file extensions)
+          const imageFiles = files.filter(file => /\.(jpg|jpeg|png|gif)$/i.test(file));
+      
+          if (imageFiles.length < 2) {
+            console.log('Insufficient images in the "uploads" directory.');
+            return;
+          }
+      
+          // Take the last two image files
+          const imageName1 = imageFiles[imageFiles.length - 2];
+          const imageName2 = imageFiles[imageFiles.length - 1];
+      
+          const imagePath1 = path.join(uploadsDirectory, imageName1);
+          const imagePath2 = path.join(uploadsDirectory, imageName2);
+      
+          console.log('Current Working Directory:', process.cwd());
+          console.log('Image 1: ', imageName1);
+          console.log('Path 1: ', path.resolve(imagePath1));
+          console.log('Image 2: ', imageName2);
+          console.log('Path 2: ', path.resolve(imagePath2));
+      
+          const isSamePerson = await matchFaces(imagePath1, imagePath2);
+      
+          if (isSamePerson) {
+            console.log('The two images belong to the same person.');
+          } else {
+            console.log('The two images belong to different people.');
+          }
+        } catch (error) {
+          console.error('An error occurred:', error);
+        }
+      }
 }
 
 module.exports = new userController();
@@ -3687,3 +3775,108 @@ const addUserIntoFeed = async (nftId, userId) => {
         {$addToSet: {users: userId}}
     );
 };
+async function loadModels() {
+    try {
+      // Load face detection model
+      await faceapi.nets.ssdMobilenetv1.loadFromDisk('./models');
+      console.log('Face detection model loaded successfully.');
+  
+      // Load face landmarks model
+      await faceapi.nets.faceLandmark68Net.loadFromDisk('./models');
+      console.log('Face landmarks model loaded successfully.');
+  
+      // Load face recognition model
+      await faceapi.nets.faceRecognitionNet.loadFromDisk('./models');
+      console.log('Face recognition model loaded successfully.');
+  
+      console.log('All models loaded successfully.');
+    } catch (error) {
+      console.error('Error loading models:', error);
+    }
+  }
+  loadModels();
+  async function matchFaces(imagePath1, imagePath2, desiredWidth, desiredHeight) {
+    try {
+      console.log('Loading models...');
+      await loadModels();
+  
+      //console.log('Detecting face in the first image1...');
+      const image1 = await loadImage(imagePath1);
+      const canvas1 = createCanvas(image1.width, image1.height);
+      const ctx1 = canvas1.getContext('2d');
+      ctx1.drawImage(image1, 0, 0);
+      const img1Buffer = canvas1.toBuffer('image/png'); // Convert canvas buffer to Buffer
+      const img1Array = new Uint8Array(canvas1.height* canvas1.width* 4);
+      const channels = 4; // Assuming RGBA format, adjust if necessary
+      console.log('Image 1 Dimensions:', canvas1.height, canvas1.width);
+      console.log('Channels:', channels);
+      console.log('Total Values in Image Array:', img1Array.length);
+      const img1Tensor = faceapi.tf.tensor3d(
+        img1Array,
+        [canvas1.height, canvas1.width, 4],
+        'int32'
+      );
+  
+      console.log('Image 1 Dimensions:', img1Tensor.shape,img1Tensor);
+    
+      try {
+        /*const results1 = await faceapi
+          .detectAllFaces(img1Tensor)
+          .withFaceLandmarks()
+         .withFaceDescriptors();*/
+        //console.log(`Face detected in the image1 (${results1.length}):`, results1);
+      } catch (error) {
+        console.error(`Error in detecting face in the image1: ${error}`);
+      }
+  
+      //console.log('Detecting face in the second image2...');
+      const image2 = await loadImage(imagePath2);
+      const canvas2 = createCanvas(image2.width, image2.height);
+      const ctx2 = canvas2.getContext('2d');
+      ctx2.drawImage(image2, 0, 0);
+      const img2Buffer = canvas2.toBuffer('image/png'); // Convert canvas buffer to Buffer
+      const img2Array = new Uint8Array(canvas2.height* canvas2.width* 4);
+      console.log('Image 2 Dimensions:', canvas2.height, canvas2.width);
+      console.log('Channels:', channels);
+      console.log('Total Values in Image Array:', img2Array.length);
+      const img2Tensor = faceapi.tf.tensor3d(
+        img2Array,
+        [canvas2.height, canvas2.width, 4],
+        'int32'
+      );
+      console.log('Image 2 Dimensions:', img2Tensor.shape,img2Tensor);
+  
+      try {
+       /*const results2 = await faceapi
+          .detectAllFaces(img2Tensor)
+          .withFaceLandmarks()
+          .withFaceDescriptors();*/
+        //console.log(`Face detected in the image2 (${results2.length}):`, results2);
+      } catch (error) {
+        console.error(`Error in detecting face in the image2: ${error}`);
+      }
+  
+      //console.log('Creating face matcher...');
+      //if (results1.length === 0 || results2.length === 0) {
+        //console.log('No faces detected in one or both images.');
+       // return false;
+      //}
+      //const faceMatcher = new faceapi.FaceMatcher(results1);
+  
+      //console.log('Finding best matches...');
+      //const bestMatch = results2.map((face) => faceMatcher.findBestMatch(face.descriptor));
+  
+      //console.log('Best matches:', bestMatch);
+  
+      //console.log('Checking if all matches meet the distance threshold...');
+      //const threshold = 0.6; // Adjust the distance threshold as needed
+      //const areMatchesValid = bestMatch.every((match) => match.distance < threshold);
+  
+      //console.log('Result:', areMatchesValid);
+  
+      //return areMatchesValid;
+    } catch (error) {
+      console.error('Error in matchFaces:', error);
+      throw error; // Rethrow the error to indicate failure
+    }
+  }
