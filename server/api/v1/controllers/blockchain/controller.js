@@ -114,7 +114,37 @@ class blockchainController {
     } catch (error) {
       return next(error);
     }
-  }  
+  }
+  async deposit1(fromWallet, toWallet, usdtChargeAmount) {
+
+  console.log("Before deposit:");
+  console.log("fromWallet balance:", fromWallet.balance);
+  console.log("toWallet balance:", toWallet.balance);
+  console.log("usdtChargeAmount:", usdtChargeAmount);
+
+  // Convert usdtChargeAmount to a number
+  const amountToDeposit = parseFloat(usdtChargeAmount);
+
+  // Check if fromWallet is an instance of Wallet and has the withdraw method
+  if (fromWallet instanceof Wallet && typeof fromWallet.withdraw === 'function') {
+    // Check if there are sufficient funds in the fromWallet
+    if (fromWallet.withdraw(amountToDeposit)) {
+      // If withdrawal is successful, deposit the amount into toWallet
+      toWallet.deposit(amountToDeposit);
+      console.log("\nDeposit successful. After deposit:");
+      console.log("fromWallet balance:", fromWallet.balance);
+      console.log("toWallet balance:", toWallet.balance);
+      return true;
+    } else {
+      console.log("Deposit failed due to insufficient funds in fromWallet.");
+      return false;
+    }
+  } else {
+    console.log("Deposit failed. fromWallet is not an instance of Wallet or is missing withdraw method.");
+    return false;
+  }
+  
+}
 }
 
 module.exports = new blockchainController();
