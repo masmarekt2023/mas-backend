@@ -32,11 +32,11 @@ module.exports = {
     api_secret: "EBn5oevs8bEBCLj6J5_UdtPhGmk",
   },
   twilio: {
-   account_sid: "ACa8532bab52d2db3af3488ae121edb338",
-    auth_token: "aeb901565294af14141a79483f37e8bd",
-    verifySid: "VA649ecbd84f837708f1c025bea870d242",
-    sg_api: "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",
-    template_id: "d-60e7127ee67d401aa8f4a38a38582ebe",
+   account_sid: "AC41e6f1bf9f017aa4128ee463d7550c2c",
+    auth_token: "2eae964a821f8daa75ec381c9881b980",
+    verifySid: "VA9a32edf0d2a15f3ab0480132e52ae65b",
+    sg_api: "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",
+    template_id: "d-c6463722334d45c2a6fe0b1b94e874bd",
   },
 
   //usdtContractAddress: "0x7ef95a0FEE0Dd31b22626fA2e10Ee6A223F8a684", // bsc testnet
