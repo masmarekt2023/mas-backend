@@ -32,9 +32,9 @@ module.exports = {
     api_secret: "EBn5oevs8bEBCLj6J5_UdtPhGmk",
   },
   twilio: {
-   account_sid: "AC41e6f1bf9f017aa4128ee463d7550c2c",
-    auth_token: "2eae964a821f8daa75ec381c9881b980",
-    verifySid: "VA9a32edf0d2a15f3ab0480132e52ae65b",
+   account_sid: "ACad9ccaa9e55b38edc346aa3afe8b3518",
+    auth_token: "0fd78dfc07210adbd871552881b3a202",
+    verifySid: "VAbb02c9e3a675fdae25e278e3ef532167",
     sg_api: "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",
     template_id: "d-c6463722334d45c2a6fe0b1b94e874bd",
   },
