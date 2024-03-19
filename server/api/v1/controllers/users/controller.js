@@ -1250,39 +1250,31 @@ class userController {
      */
 
     async updateProfile(req, res, next) {
-        try {
-            const profilePic = req.files.find(
-                (i) => i?.fieldname === "profilePicFile"
-            )?.path;
-            const coverPic = req.files.find(
-                (i) => i?.fieldname === "coverPicFile"
-            )?.path;
-            let validatedBody = req.body;
+    try {
+      let validatedBody = req.body;
 
-            profilePic
-                ? (validatedBody.profilePic = await commonFunction.getFileUrlOnPhone(
-                    profilePic
-                ))
-                : null;
-
-            coverPic
-                ? (validatedBody.coverPic = await commonFunction.getFileUrlOnPhone(
-                    coverPic
-                ))
-                : null;
-
-            let userResult = await findUser({_id: req.userId});
-            if (!userResult) {
-                return apiError.notFound(responseMessage.USER_NOT_FOUND);
-            }
-            validatedBody.isUpdated = true;
-
-            let updated = await updateUserById(userResult._id, validatedBody);
-            return res.json(new response(updated, responseMessage.PROFILE_UPDATED));
-        } catch (error) {
-            return next(error);
-        }
+      if (validatedBody.profilePic) {
+        validatedBody.profilePic = await commonFunction.getSecureUrl(
+          validatedBody.profilePic
+        );
+      }
+      if (validatedBody.coverPic) {
+        validatedBody.coverPic = await commonFunction.getSecureUrl(
+          validatedBody.coverPic
+        );
+      }
+      let userResult = await findUser({ _id: req.userId });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      validatedBody.isUpdated = true;
+       
+      let updated = await updateUserById(userResult._id, validatedBody);
+      return res.json(new response(updated, responseMessage.PROFILE_UPDATED));
+    } catch (error) {
+      return next(error);
     }
+  }
     async deleteProfile(req, res, next) {
         try {
           // Assuming you have a function to find the user by ID
