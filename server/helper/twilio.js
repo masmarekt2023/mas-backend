@@ -25,12 +25,12 @@ module.exports = {
         } catch (error) {
             return error;
         }
-    }, checkVerification: async (to, otp) => {
+    }, checkVerification: async (to, sms) => {
         try {
-            console.log(to, otp);
+            console.log(to, sms);
             return await client.verify.v2.services(VerificationServiceId)
                 .verificationChecks
-                .create({to: to, code: otp});
+                .create({to: to, code: sms});
         } catch (error) {
             return error;
         }
