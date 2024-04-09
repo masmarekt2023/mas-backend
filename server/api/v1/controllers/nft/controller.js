@@ -519,7 +519,7 @@ class nftController {
       validatedBody.mediaUrl = await commonFunction.getImageUrl(req.files);
       validatedBody.userId = userResult._id;
       var result = await createNft1(validatedBody);
-      let mesage = `A new bundle (${validatedBody.bundleName}) has been created by ${userResult.name}, with the donation amount of ${validatedBody.donationAmount} ${validatedBody.coinName} for ${validatedBody.duration}.`;
+      let mesage = `A new item (${validatedBody.itemName}) has been created by ${userResult.name}, with the donation amount of ${validatedBody.donationAmount} ${validatedBody.coinName} for ${validatedBody.duration}.`;
       notificattionToAllSubscriber(
         userResult.followers,
         mesage,

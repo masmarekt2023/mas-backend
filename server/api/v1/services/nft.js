@@ -1,4 +1,5 @@
 const nftModel = require("../../../models/nft");
+const nft1Model = require("../../../models/nft1");
 const userModel = require("../../../models/user");
 const status = require("../../../enums/status");
 const mongoose = require("mongoose");
@@ -9,7 +10,7 @@ const nftServices = {
   },
 
   createNft1: async (insertObj) => {
-    return await nftModel.create(insertObj);
+    return await nft1Model.create(insertObj);
   },
 
   findNft: async (query) => {
