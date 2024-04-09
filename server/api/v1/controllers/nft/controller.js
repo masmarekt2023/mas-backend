@@ -5,25 +5,28 @@ const responseMessage = require("../../../../../assets/responseMessage");
 const { userServices } = require("../../services/user");
 
 const { nftServices } = require("../../services/nft");
+const { nft1Services } = require("../../services/nft1");
 const { notificationServices } = require("../../services/notification");
 const { auctionNftServices } = require("../../services/auctionNft");
 
 const { findUser, findUserData } = userServices;
 const {
   createNft,
-  createNft1,
   findNft,
   updateNft,
   findNft1,
   nftListWithoutShared,
   nftListWithAggregate,
   listAllNft,
-  listAllNft1,
   nftListWithAggregatePipeline,
   myNftPaginateSearch,
   myNft1PaginateSearch,
   nftPaginateSearch,
 } = nftServices;
+const {
+  createNFT1,
+  listAllNFT1
+} = nft1Services;
 const { createNotification } = notificationServices;
 const {
   createAuctionNft,
@@ -518,7 +521,7 @@ class nftController {
       }
       validatedBody.mediaUrl = await commonFunction.getImageUrl(req.files);
       validatedBody.userId = userResult._id;
-      var result = await createNft1(validatedBody);
+      var result = await createNFT1(validatedBody);
       let mesage = `A new item (${validatedBody.itemName}) has been created by ${userResult.name}, with the donation amount of ${validatedBody.donationAmount} ${validatedBody.coinName} for ${validatedBody.duration}.`;
       notificattionToAllSubscriber(
         userResult.followers,
@@ -877,7 +880,7 @@ class nftController {
     }
   }
 
-  async listAllNft1(req, res, next) {
+  async listAllNFT1(req, res, next) {
     const validationSchema = {
       search: Joi.string().optional(),
       page: Joi.number().optional(),
@@ -885,7 +888,7 @@ class nftController {
     };
     try {
       const validatedBody = await Joi.validate(req.query, validationSchema);
-      let dataResults = await listAllNft1(validatedBody);
+      let dataResults = await listAllNFT1(validatedBody);
       return res.json(new response(dataResults, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);

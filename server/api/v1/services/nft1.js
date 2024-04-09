@@ -1,34 +1,34 @@
-const nftModel = require("../../../models/nft");
+const nft1Model = require("../../../models/nft1");
 const userModel = require("../../../models/user");
 const status = require("../../../enums/status");
 const mongoose = require("mongoose");
 
-const nftServices = {
-  createNft: async (insertObj) => {
-    return await nftModel.create(insertObj);
+const nft1Services = {
+  createNFT1: async (insertObj) => {
+    return await nft1Model.create(insertObj);
   },
-  findNft: async (query) => {
-    return await nftModel
+  findNFT1: async (query) => {
+    return await nft1Model
       .findOne(query)
       .populate("userId")
       .select(
         "-ethAccount.privateKey -password -referralCode -email -permissions"
       );
   },
-  findNft1: async (query) => {
-    return await nftModel.findOne(query);
+  findNFT11: async (query) => {
+    return await nft1Model.findOne(query);
   },
 
-  findUserNft: async (query) => {
-    return await nftModel.find(query);
+  findUserNFT1: async (query) => {
+    return await nft1Model.find(query);
   },
 
-  findNftWithPopulateDetails: async (id, userId) => {
+  findNFT1WithPopulateDetails: async (id, userId) => {
     let query = {
       _id: mongoose.Types.ObjectId(id),
       status: { $ne: status.DELETE },
     };
-    return await nftModel.aggregate([
+    return await nft1Model.aggregate([
       { $match: query },
       {
         $addFields: {
@@ -59,7 +59,7 @@ const nftServices = {
           pipeline: [
             {
               $match: {
-                $expr: { $eq: ["$$order_id", "$nftId"] },
+                $expr: { $eq: ["$$order_id", "$NFT1Id"] },
               },
             },
             {
@@ -85,13 +85,13 @@ const nftServices = {
     ]);
   },
 
-  updateNft: async (query, updateObj) => {
-    return await nftModel.findOneAndUpdate(query, updateObj, { new: true });
+  updateNFT1: async (query, updateObj) => {
+    return await nft1Model.findOneAndUpdate(query, updateObj, { new: true });
   },
 
-  nftList: async (userId) => {
-    // return await nftModel.find(query).populate('userId orderId bidId');
-    return await nftModel.aggregate([
+  NFT1List: async (userId) => {
+    // return await nft1Model.find(query).populate('userId orderId bidId');
+    return await nft1Model.aggregate([
       { $match: { userId: userId, status: { $ne: status.DELETE } } },
       {
         $addFields: {
@@ -140,15 +140,15 @@ const nftServices = {
     ]);
   },
 
-  nftSubscriber: async (query) => {
-    return await nftModel.find(query).populate("userId");
+  NFT1Subscriber: async (query) => {
+    return await nft1Model.find(query).populate("userId");
   },
 
-  nftSubscriberList: async (query) => {
-    return await nftModel.find(query).select("subscribers");
+  NFT1SubscriberList: async (query) => {
+    return await nft1Model.find(query).select("subscribers");
   },
 
-  nftPaginateSearch: async (validatedBody) => {
+  NFT1PaginateSearch: async (validatedBody) => {
     let query = { status: { $ne: status.DELETE } };
     const { search, page, limit } = validatedBody;
     if (search) {
@@ -163,10 +163,10 @@ const nftServices = {
       limit: limit || 10,
       sort: { createdAt: -1 },
     };
-    return await nftModel.paginate(query, options);
+    return await nft1Model.paginate(query, options);
   },
 
-  myNftPaginateSearch: async (validatedBody, userId) => {
+  myNFT1PaginateSearch: async (validatedBody, userId) => {
     let query = { userId: userId, status: { $ne: status.DELETE } };
     const { search, fromDate, toDate, page, limit } = validatedBody;
     if (search) {
@@ -195,10 +195,10 @@ const nftServices = {
       sort: { createdAt: -1 },
       populate: {path: 'userId'}
     };
-    return await nftModel.paginate(query, options);
+    return await nft1Model.paginate(query, options);
   },
 
-  myNft1PaginateSearch: async (validatedBody, userId) => {
+  myNFT11PaginateSearch: async (validatedBody, userId) => {
     let query = { userId: userId, status: { $ne: status.DELETE } };
     const { search, fromDate, toDate, page, limit } = validatedBody;
     if (search) {
@@ -227,15 +227,15 @@ const nftServices = {
       sort: { createdAt: -1 },
       populate: {path: 'userId'}
     };
-    return await nftModel.paginate(query, options);
+    return await nft1Model.paginate(query, options);
   },
 
-  nftCount: async () => {
-    return await nftModel.countDocuments();
+  NFT1Count: async () => {
+    return await nft1Model.countDocuments();
   },
 
-  nftListWithAggregate: async (validatedBody, userId, subscribeNft) => {
-    let query = { status: { $ne: status.DELETE }, _id: { $nin: subscribeNft } };
+  NFT1ListWithAggregate: async (validatedBody, userId, subscribeNFT1) => {
+    let query = { status: { $ne: status.DELETE }, _id: { $nin: subscribeNFT1 } };
     const { search } = validatedBody;
     if (search) {
       query.$or = [
@@ -247,7 +247,7 @@ const nftServices = {
       ];
     }
 
-    return await nftModel.aggregate([
+    return await nft1Model.aggregate([
       { $match: query },
       {
         $addFields: {
@@ -281,7 +281,7 @@ const nftServices = {
     ]);
   },
 
-  listAllNft: async (validatedBody) => {
+  listAllNFT1: async (validatedBody) => {
     let activeIds = await getActiveUser();
     let query = { status: { $ne: status.DELETE }, userId: { $in: activeIds } };
     const { search, page, limit } = validatedBody;
@@ -300,10 +300,10 @@ const nftServices = {
       sort: { createdAt: -1 },
       populate: { path: "userId", select: "-ethAccount.privateKey" }
     };
-    return await nftModel.paginate(query, options);
+    return await nft1Model.paginate(query, options);
   },
 
-  nftListWithAggregatePipeline: async (validatedBody, userId) => {
+  NFT1ListWithAggregatePipeline: async (validatedBody, userId) => {
     let query = {
       userId: mongoose.Types.ObjectId(userId),
       status: { $ne: status.DELETE },
@@ -318,7 +318,7 @@ const nftServices = {
         { tokenName: { $regex: search, $options: "i" } },
       ];
     }
-    return await nftModel.aggregate([
+    return await nft1Model.aggregate([
       { $match: query },
       {
         $addFields: {
@@ -352,7 +352,7 @@ const nftServices = {
           pipeline: [
             {
               $match: {
-                $expr: { $eq: ["$$order_id", "$nftId"] },
+                $expr: { $eq: ["$$order_id", "$NFT1Id"] },
               },
             },
             {
@@ -379,7 +379,7 @@ const nftServices = {
     ]);
   },
 
-  nftListWithoutShared: async (validatedBody, userId) => {
+  NFT1ListWithoutShared: async (validatedBody, userId) => {
     let query = {
       userId: mongoose.Types.ObjectId(userId),
       status: { $ne: status.DELETE },
@@ -395,7 +395,7 @@ const nftServices = {
         { tokenName: { $regex: search, $options: "i" } },
       ];
     }
-    return await nftModel.aggregate([
+    return await nft1Model.aggregate([
       { $match: query },
       {
         $addFields: {
@@ -426,7 +426,7 @@ const nftServices = {
           pipeline: [
             {
               $match: {
-                $expr: { $eq: ["$$order_id", "$nftId"] },
+                $expr: { $eq: ["$$order_id", "$NFT1Id"] },
               },
             },
             {
@@ -452,7 +452,7 @@ const nftServices = {
     ]);
   },
 
-  nftListWithAggregatePipelineForAll: async (validatedBody, userId) => {
+  NFT1ListWithAggregatePipelineForAll: async (validatedBody, userId) => {
     let activeIds = await getActiveUser();
     let query = {
       userId: { $in: activeIds },
@@ -468,7 +468,7 @@ const nftServices = {
         { tokenName: { $regex: search, $options: "i" } },
       ];
     }
-    return await nftModel.aggregate([
+    return await nft1Model.aggregate([
       { $match: query },
       {
         $addFields: {
@@ -499,7 +499,7 @@ const nftServices = {
           pipeline: [
             {
               $match: {
-                $expr: { $eq: ["$$order_id", "$nftId"] },
+                $expr: { $eq: ["$$order_id", "$NFT1Id"] },
               },
             },
             {
@@ -526,15 +526,15 @@ const nftServices = {
   },
 
   multiUpdate: async (updateObj) => {
-    return await nftModel.updateMany({}, updateObj, { multi: true });
+    return await nft1Model.updateMany({}, updateObj, { multi: true });
   },
 
   multiUpdateBundle: async (query, updateObj) => {
-    return await nftModel.updateMany(query, updateObj, { multi: true });
+    return await nft1Model.updateMany(query, updateObj, { multi: true });
   },
 
   sharedBundleList: async (userId, bundleIds) => {
-    return await nftModel.aggregate([
+    return await nft1Model.aggregate([
       { $match: { _id: { $in: bundleIds }, status: { $ne: status.DELETE } } },
       {
         $addFields: {
@@ -559,7 +559,7 @@ const nftServices = {
         $lookup: {
           from: "audience",
           localField: "_id",
-          foreignField: "nftId",
+          foreignField: "NFT1Id",
           as: "postList",
         },
       },
@@ -577,7 +577,7 @@ const nftServices = {
 
   sharedBundleListPerticular: async (userId, bundleIds) => {
     if (userId) {
-      return await nftModel.aggregate([
+      return await nft1Model.aggregate([
         {
           $match: {
             _id: mongoose.Types.ObjectId(bundleIds),
@@ -607,7 +607,7 @@ const nftServices = {
           $lookup: {
             from: "audience",
             localField: "_id",
-            foreignField: "nftId",
+            foreignField: "NFT1Id",
             as: "postList",
           },
         },
@@ -622,7 +622,7 @@ const nftServices = {
         },
       ]);
     } else {
-      return await nftModel.aggregate([
+      return await nft1Model.aggregate([
         {
           $match: {
             _id: mongoose.Types.ObjectId(bundleIds),
@@ -641,7 +641,7 @@ const nftServices = {
           $lookup: {
             from: "audience",
             localField: "_id",
-            foreignField: "nftId",
+            foreignField: "NFT1Id",
             as: "postList",
           },
         },
@@ -659,7 +659,7 @@ const nftServices = {
   },
 };
 
-module.exports = { nftServices };
+module.exports = { nft1Services };
 
 const getActiveUser = async () => {
   let userId = await userModel.find({ blockStatus: false }).select("_id");

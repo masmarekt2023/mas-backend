@@ -102,4 +102,4 @@ const schemaDefination = new Schema(
 
 schemaDefination.plugin(mongoosePaginate);
 schemaDefination.plugin(mongooseAggregatePaginate);
-module.exports = Mongoose.model("nft", schemaDefination);
+module.exports = Mongoose.model("nft1", schemaDefination);
