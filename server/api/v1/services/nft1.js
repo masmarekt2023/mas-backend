@@ -198,7 +198,7 @@ const nft1Services = {
     return await nft1Model.paginate(query, options);
   },
 
-  myNFT11PaginateSearch: async (validatedBody, userId) => {
+  myNFT1PaginateSearch: async (validatedBody, userId) => {
     let query = { userId: userId, status: { $ne: status.DELETE } };
     const { search, fromDate, toDate, page, limit } = validatedBody;
     if (search) {
