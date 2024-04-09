@@ -11,12 +11,14 @@ const { auctionNftServices } = require("../../services/auctionNft");
 const { findUser, findUserData } = userServices;
 const {
   createNft,
+  createNft1,
   findNft,
   updateNft,
   findNft1,
   nftListWithoutShared,
   nftListWithAggregate,
   listAllNft,
+  listAllNft1,
   nftListWithAggregatePipeline,
   myNftPaginateSearch,
   nftPaginateSearch,
@@ -484,6 +486,28 @@ class nftController {
     }
   }
 
+  async createNFT1(req, res, next) {
+    try {
+      const validatedBody = req.body;
+      let userResult = await findUserData({ _id: req.userId });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      validatedBody.mediaUrl = await commonFunction.getImageUrl(req.files);
+      validatedBody.userId = userResult._id;
+      var result = await createNft1(validatedBody);
+      let mesage = `A new bundle (${validatedBody.bundleName}) has been created by ${userResult.name}, with the donation amount of ${validatedBody.donationAmount} ${validatedBody.coinName} for ${validatedBody.duration}.`;
+      notificattionToAllSubscriber(
+        userResult.followers,
+        mesage,
+        validatedBody.mediaUrl
+      );
+      return res.json(new response(result, responseMessage.NFT_ADDED));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   /**
    * @swagger
    * /nft/nft/{_id}:
@@ -824,6 +848,21 @@ class nftController {
     try {
       const validatedBody = await Joi.validate(req.query, validationSchema);
       let dataResults = await listAllNft(validatedBody);
+      return res.json(new response(dataResults, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async listAllNft1(req, res, next) {
+    const validationSchema = {
+      search: Joi.string().optional(),
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
+      let dataResults = await listAllNft1(validatedBody);
       return res.json(new response(dataResults, responseMessage.DATA_FOUND));
     } catch (error) {
       return next(error);

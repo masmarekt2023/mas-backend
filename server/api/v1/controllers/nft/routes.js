@@ -6,6 +6,7 @@ const upload = require("../../../../helper/uploadHandler");
 module.exports = Express.Router()
 
     .get("/listAllNft", controller.listAllNft)
+    .get("/listAllNft1", controller.listAllNft1)
     .get("/nftList", controller.allNftAuctionList)
     .get("/nft/:_id", controller.viewNFT)
 
@@ -29,3 +30,4 @@ module.exports = Express.Router()
     .use(upload.uploadFile)
     .put("/nft", controller.editNFT)
     .post("/nft", controller.createNFT)
+    .post("/nft1", controller.createNFT1)
