@@ -203,6 +203,38 @@ const nftServices = {
     return await nftModel.paginate(query, options);
   },
 
+  myNft1PaginateSearch: async (validatedBody, userId) => {
+    let query = { userId: userId, status: { $ne: status.DELETE } };
+    const { search, fromDate, toDate, page, limit } = validatedBody;
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: "i" } },
+        { symbol: { $regex: search, $options: "i" } },
+        { categoryType: { $regex: search, $options: "i" } },
+        { contractAddress: { $regex: search, $options: "i" } },
+      ];
+    }
+    if (fromDate && !toDate) {
+      query.createdAt = { $gte: fromDate };
+    }
+    if (!fromDate && toDate) {
+      query.createdAt = { $lte: toDate };
+    }
+    if (fromDate && toDate) {
+      query.$and = [
+        { createdAt: { $gte: fromDate } },
+        { createdAt: { $lte: toDate } },
+      ];
+    }
+    let options = {
+      page: page || 1,
+      limit: limit || 10,
+      sort: { createdAt: -1 },
+      populate: {path: 'userId'}
+    };
+    return await nftModel.paginate(query, options);
+  },
+
   nftCount: async () => {
     return await nftModel.countDocuments();
   },

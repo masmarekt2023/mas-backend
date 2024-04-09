@@ -24,6 +24,7 @@ module.exports = Express.Router()
     .get("/viewNft/:_id", controller.viewAuctionNft)
     .put("/editNft", controller.editAuctionNft)
     .get("/myNftList", controller.myAuctionNftList)
+    .get("/myNft1List", controller.myAuctionNft1List)
 
     .get('/searchNft', controller.searchNft)
 

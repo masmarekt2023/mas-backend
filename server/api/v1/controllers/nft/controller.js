@@ -21,6 +21,7 @@ const {
   listAllNft1,
   nftListWithAggregatePipeline,
   myNftPaginateSearch,
+  myNft1PaginateSearch,
   nftPaginateSearch,
 } = nftServices;
 const { createNotification } = notificationServices;
@@ -367,6 +368,28 @@ class nftController {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
       let dataResults = await myNftPaginateSearch(validatedBody ,userResult._id,);
+      /*if (dataResults.length == 0) {
+        throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
+      }*/
+      return res.json(new response(dataResults, responseMessage.DATA_FOUND));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async myAuctionNft1List(req, res, next) {
+    const validationSchema = {
+      search: Joi.string().optional(),
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
+      let userResult = await findUser({ _id: req.userId });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      let dataResults = await myNft1PaginateSearch(validatedBody ,userResult._id,);
       /*if (dataResults.length == 0) {
         throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
       }*/
