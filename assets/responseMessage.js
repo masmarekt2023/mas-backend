@@ -123,6 +123,7 @@ module.exports = {
   STORY_NOT_FOUND: "Story not found",
   STORY_REMOVE: "Story removed successfully",
   STORY_WATCH: "You have watch this story",
+  BILL_ADDED: "bill add successfully",
 
   SMS_BODY: (otp) => `Your verification code is  ${otp}`,
   INSUFFICIENT_BALANCE: (coin) =>

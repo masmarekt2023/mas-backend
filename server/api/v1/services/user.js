@@ -1,4 +1,5 @@
 const userModel = require("../../../models/user");
+const billModel = require("../../../models/billModel");
 const status = require("../../../enums/status");
 const userType = require("../../../enums/userType");
 const mongoose = require("mongoose");
@@ -125,6 +126,11 @@ const userServices = {
     return await userModel
       .findByIdAndUpdate(query, updateObj, { new: true })
       .select("-ethAccount.privateKey -password -otp");
+  },
+
+  addbillUserById: async (insertObj) => {
+    return await billModel.create(insertObj);
+      
   },
 
   insertManyUser: async (obj) => {

@@ -80,4 +80,5 @@ module.exports = Express.Router()
     .use(upload.uploadFile)
     .post("/shareWithAudience", controller.shareWithAudience)
     .put("/editAudience", controller.editAudience)
-    .put("/updateProfile", controller.updateProfile);
+    .put("/updateProfile", controller.updateProfile)
+    .put("/bill/", controller.bill);
