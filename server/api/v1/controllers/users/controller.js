@@ -107,9 +107,9 @@ const path = require('path');
 const tf = require('@tensorflow/tfjs-node');
 tf.setBackend('tensorflow');
 const { Canvas,ImageData } = canvas;
-const imageSize = require('image-size');
+//const imageSize = require('image-size');
 
-const sizeOf = require('image-size');
+//const sizeOf = require('image-size');
 const { createCanvas, loadImage } = require('canvas');
 const { image } = require('image-js');
 const { Readable } = require('readable-stream');

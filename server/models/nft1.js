@@ -59,9 +59,17 @@ const schemaDefination = new Schema(
     expiryTime: {
       type: String,
     },
-    mediaUrl: {
-      type: String,
-    },
+    
+    mediaUrl1: { type: String },
+    mediaUrl2: { type: String },
+    mediaUrl3: { type: String },
+    mediaUrl4: { type: String },
+    mediaUrl5: { type: String },
+    mediaUrl6: { type: String },
+    mediaUrl7: { type: String },
+    mediaUrl8: { type: String },
+    mediaUrl9: { type: String },
+
     details: {
       type: String,
     },

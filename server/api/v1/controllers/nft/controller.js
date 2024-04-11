@@ -8,6 +8,7 @@ const { nftServices } = require("../../services/nft");
 const { nft1Services } = require("../../services/nft1");
 const { notificationServices } = require("../../services/notification");
 const { auctionNftServices } = require("../../services/auctionNft");
+const cloudinary = require("cloudinary");
 
 const { findUser, findUserData } = userServices;
 const {
@@ -20,12 +21,13 @@ const {
   listAllNft,
   nftListWithAggregatePipeline,
   myNftPaginateSearch,
-  myNft1PaginateSearch,
+ 
   nftPaginateSearch,
 } = nftServices;
 const {
   createNFT1,
-  listAllNFT1
+  listAllNFT1,
+  myNFT1PaginateSearch
 } = nft1Services;
 const { createNotification } = notificationServices;
 const {
@@ -392,7 +394,7 @@ class nftController {
       if (!userResult) {
         return apiError.notFound(responseMessage.USER_NOT_FOUND);
       }
-      let dataResults = await myNft1PaginateSearch(validatedBody ,userResult._id,);
+      let dataResults = await myNFT1PaginateSearch(validatedBody ,userResult._id,);
       /*if (dataResults.length == 0) {
         throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
       }*/
@@ -514,25 +516,36 @@ class nftController {
 
   async createNFT1(req, res, next) {
     try {
-      const validatedBody = req.body;
-      let userResult = await findUserData({ _id: req.userId });
-      if (!userResult) {
-        return apiError.notFound(responseMessage.USER_NOT_FOUND);
-      }
-      validatedBody.mediaUrl = await commonFunction.getImageUrl(req.files);
-      validatedBody.userId = userResult._id;
-      var result = await createNFT1(validatedBody);
-      let mesage = `A new item (${validatedBody.itemName}) has been created by ${userResult.name}, with the donation amount of ${validatedBody.donationAmount} ${validatedBody.coinName} for ${validatedBody.duration}.`;
-      notificattionToAllSubscriber(
-        userResult.followers,
-        mesage,
-        validatedBody.mediaUrl
-      );
-      return res.json(new response(result, responseMessage.NFT_ADDED));
+        const validatedBody = req.body;
+        let userResult = await findUserData({ _id: req.userId });
+        if (!userResult) {
+            return apiError.notFound(responseMessage.USER_NOT_FOUND);
+        }
+
+        validatedBody.mediaUrls = await commonFunction.getImageUrls(req.files);
+        validatedBody.userId = userResult._id;
+
+        // Assuming your model supports mediaUrl1, mediaUrl2, ..., mediaUrl9
+        for (let i = 0; i < validatedBody.mediaUrls.length; i++) {
+            validatedBody[`mediaUrl${i + 1}`] = validatedBody.mediaUrls[i];
+        }
+
+        var result = await createNFT1(validatedBody);
+
+        let message = `A new item (${validatedBody.itemName}) has been created by ${userResult.name}, with the donation amount of ${validatedBody.donationAmount} ${validatedBody.coinName} for ${validatedBody.duration}.`;
+        notificattionToAllSubscriber(
+            userResult.followers,
+            message,
+            validatedBody.mediaUrls.join(', ')
+        );
+
+        return res.json(new response(result, responseMessage.NFT_ADDED));
     } catch (error) {
-      return next(error);
+        return next(error);
     }
-  }
+}
+
+
 
   /**
    * @swagger

@@ -44,6 +44,18 @@ module.exports = {
     return result.secure_url;
   },
 
+  getImageUrls: async (files) => {
+    let urls = [];
+    for (let i = 0; i < Math.min(files.length, 9); i++) { // Process up to 9 files
+        const result = await cloudinary.v2.uploader.upload(files[i].path, {
+            resource_type: "auto"
+        });
+        urls.push(result.secure_url);
+    }
+    return urls;
+},
+
+
   getFileUrlOnPhone: async (path) => {
     var result = await cloudinary.v2.uploader.upload(path, {
       resource_type: "auto",
