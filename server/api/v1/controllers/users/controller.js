@@ -11,6 +11,7 @@ const {userServices} = require("../../services/user");
 const {subscriptionServices} = require("../../services/subscription");
 const {bundleServices} = require("../../services/bundle");
 const {nftServices} = require("../../services/nft");
+const {nft1Services} = require("../../services/nft1");
 const {audienceServices} = require("../../services/audience");
 const {notificationServices} = require("../../services/notification");
 const {reportServices} = require("../../services/report");
@@ -63,6 +64,11 @@ const {
     sharedBundleListPerticular,
     findUserNft,
 } = nftServices;
+const {
+    findNFT1,
+    
+} = nft1Services;
+
 const {
     createAudience,
     findAudience,
@@ -1277,32 +1283,212 @@ class userController {
     }
   }
 
-  async bill(req, res, next) {
-    try {
-      let validatedBody = req.body;
+    async  bill(req, res, next) {
+    // Validation schema
+    const validationSchema = Joi.object({
+        name: Joi.string().required(),
+        surname: Joi.string().required(),
+        email: Joi.string().required(), 
+        phoneNumber: Joi.string().optional(),
+        postcode: Joi.string().required(),
+        address1: Joi.string().required(),
+        address2: Joi.string().required(),
+    }).unknown(false);
+    console.log('Received PUT request to /user/bill with data:', req.body);
 
-      if (validatedBody.profilePic) {
-        validatedBody.profilePic = await commonFunction.getSecureUrl(
-          validatedBody.profilePic
-        );
-      }
-      if (validatedBody.coverPic) {
-        validatedBody.coverPic = await commonFunction.getSecureUrl(
-          validatedBody.coverPic
-        );
-      }
-      let userResult = await findUser({ _id: req.userId });
-      if (!userResult) {
-        return apiError.notFound(responseMessage.USER_NOT_FOUND);
-      }
-      validatedBody.isUpdated = true;
-       
-      let updated = await addbillUserById(userResult._id, validatedBody);
-      return res.json(new response(updated, responseMessage.BILL_A));
+    const validateBody = (body, schema) => {
+        return new Promise((resolve, reject) => {
+            const { error, value } = schema.validate(body);
+            if (error) {
+                reject(error);
+            } else {
+                resolve(value);
+            }
+        });
+    };
+
+    try {
+        // Validate request body against schema
+        const validatedBody = await validateBody(req.body, validationSchema);
+
+        // Destructure validated data
+        const { name, surname, email, phoneNumber,postcode, address1, address2 } = validatedBody;
+
+
+        // Preparing the bill object
+        const Bill = {
+            name,
+            surname,
+            email,
+            phoneNumber,
+            postcode,
+            address1,
+            address2,
+        };
+
+        // Function to add bill - make sure this function is defined and imported properly
+        let updated = await addbillUserById(req.userResult, Bill);
+
+        // Assuming `response` and `responseMessage` are properly defined elsewhere
+        return res.json({ success: true, data: updated, message: responseMessage.BILL_ADDED });
     } catch (error) {
-      return next(error);
+        console.error('Error processing request:', error);
+        if (error.isJoi) { // Handling Joi validation errors specifically
+            return res.status(400).json({ error: error.details[0].message });
+        }
+        next(error); // Passing to the error-handling middleware
     }
   }
+
+  async order(req, res, next) {
+    const validationSchema = {
+      nft1Id: Joi.string().optional(),
+    };
+    try {
+        const {nft1Id} = await Joi.validate(req.params, validationSchema);
+        let userResult = await findUserData({_id: req.userId});
+        if (!userResult) {
+            throw apiError.notFound(responseMessage.USER_NOT_FOUND);
+        }
+        var adminResult = await findUser({userType: userType.ADMIN});
+        let Item = await findNFT1({
+            _id: nft1Id,
+            status: {$ne: status.DELETE},
+        });
+        if (!Item) {
+            return apiError.notFound(responseMessage.NFT_NOT_FOUND);
+        }
+        let balance = Item.coinName.toLowerCase() + "Balance";
+        if (userResult[balance] >= Item.donationAmount) {
+            let CreatorUser = await findUser({
+                _id: Item.userId,
+                status: {$ne: status.DELETE},
+            });
+
+            let updateQuery = {};
+            let updateQuery1 = {$addToSet: {buyNft1: Item._id}};
+            var commissionObj = {},
+                earningObj = {},
+                firstCommission = {},
+                userEarn = {};
+            var donationAmount = Item.donationAmount;
+            var commissionResult = await sortFee({
+                masHeld: {$lte: CreatorUser.masBalance},
+                status: status.ACTIVE,
+            });
+            var commissionFee =
+                Number(donationAmount) * (commissionResult ? commissionResult.contentCreatorFee : 1 / 100);
+            var nft1DonationAmount = Number(donationAmount) - commissionFee;
+
+            updateQuery.$inc = {[balance]: Number(nft1DonationAmount)};
+            updateQuery1.$inc = {[balance]: -Number(donationAmount)};
+            commissionObj.$inc = {[balance]: Number(commissionFee)};
+            earningObj.$inc = {[balance]: Number(nft1DonationAmount)};
+            firstCommission[balance] = commissionFee;
+            userEarn[balance] = nft1DonationAmount;
+
+            if (!CreatorUser.supporters.includes(userResult._id)) {
+                updateQuery.$addToSet = {supporters: Item.userId};
+            }
+
+            await updateUser({_id: CreatorUser._id}, updateQuery);
+            await updateUser({_id: userResult._id}, updateQuery1);
+
+            let duration = Item.duration.split(" ")[0];
+            var myDate = new Date().toISOString();
+            myDate = new Date(myDate);
+            myDate.setDate(myDate.getDate() + parseInt(duration));
+            let validTillDate = myDate.toISOString();
+            await createSubscription({
+                title: Item.itemTitle,
+                name: Item.itemName,
+                description: Item.details,
+                validTillDate: validTillDate,
+                duration: duration,
+                masPrice: Item.donationAmount,
+                nft1Id: Item._id,
+                userId: userResult._id,
+                fromAddress: userResult.ethAccount.address,
+                toAddress: CreatorUser.ethAccount.address,
+                amount: donationAmount,
+            });
+            await createTransaction({
+                userId: userResult._id,
+                nft1Id: Item._id,
+                nft1UserId: Item.userId,
+                toDonationUser: Item.userId,
+                amount: Item.donationAmount,
+                transactionType: "Donation",
+                transactionStatus: "SUCCESS",
+                adminCommission: commissionFee,
+                coinName: Item.coinName,
+            });
+            await createNotification({
+                title: `Item  buy Notification!`,
+                description: `Your item ${
+                    Itrm.bundleName
+                } has been buyed by ${
+                    userResult.name
+                        ? userResult.name
+                        : userResult.userName
+                            ? userResult.userName
+                            : "a new user."
+                }.`,
+                userId: Item.userId,
+                nftId: Item._id,
+                notificationType: "Item_Buyed",
+                subscriberId: userResult._id,
+            });
+            Item.subscribers.push(userResult._id);
+            await Item.save();
+            var adminEarningResult = await findEarning({
+                userId: adminResult._id,
+                status: status.ACTIVE,
+            });
+            var userEarningResult = await findEarning({
+                userId: CreatorUser._id,
+                status: status.ACTIVE,
+            });
+            if (!adminEarningResult) {
+                firstCommission.userId = adminResult._id;
+                await createEarning(firstCommission);
+            } else {
+                await updateEarning({_id: adminEarningResult._id}, commissionObj);
+            }
+
+            if (!userEarningResult) {
+                userEarn.userId = CreatorUser._id;
+                await createEarning(userEarn);
+            } else {
+                await updateEarning({_id: userEarningResult._id}, earningObj);
+            }
+
+            addUserIntoFeed(Item._id, userResult._id);
+            return res.json(
+                new response(
+                    {
+                        buybed: "yes",
+                        nb: Item.subscribers.length,
+                    },
+                    responseMessage.SUBSCRIBED
+                )
+            );
+        } else {
+            return res.json(
+                new response(
+                    {subscribed: "no"},
+                    responseMessage.INSUFFICIENT_BALANCE(Item.coinName),
+                    400
+                )
+            );
+        }
+    } catch (error) {
+        return next(error);
+    }
+    
+    
+  }
+
     async deleteProfile(req, res, next) {
         try {
           // Assuming you have a function to find the user by ID
@@ -1321,7 +1507,7 @@ class userController {
         }
       }
     
-      async deactivateProfile(req, res, next) {
+    async deactivateProfile(req, res, next) {
         try {
           let userResult = await deactivateUser({ _id: req.userId });
       

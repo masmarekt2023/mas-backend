@@ -9,6 +9,7 @@ module.exports = Express.Router()
     .post("/login", controller.login)
     .post("/forgotPassword", controller.forgotPassword)
     .post("/resetPassword/", controller.resetPassword)
+    .post("/order", controller.order)
     .get("/getUser/:userName", controller.getUser)
     .get("/getUserDetail/:userName", controller.getUserDetail)
     .get("/userList", controller.userList)
@@ -82,3 +83,4 @@ module.exports = Express.Router()
     .put("/editAudience", controller.editAudience)
     .put("/updateProfile", controller.updateProfile)
     .put("/bill/", controller.bill);
+    

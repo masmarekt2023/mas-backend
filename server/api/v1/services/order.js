@@ -60,7 +60,7 @@ const orderServices = {
     return await orderModel.findOneAndUpdate(query, updateObj, { new: true });
   },
 
-  orderList: async (query, validatedBody) => {
+  /*orderList: async (query, validatedBody) => {
     const { page, limit } = validatedBody;
     let options = {
       page: page || 1,
@@ -76,7 +76,7 @@ const orderServices = {
       ]
     };
     return await orderModel.paginate(query, options);
-  },
+  },*/
 
   soldOrderList: async (query) => {
     // let activeIds = await getActiveUser();

@@ -128,8 +128,8 @@ const userServices = {
       .select("-ethAccount.privateKey -password -otp");
   },
 
-  addbillUserById: async (insertObj) => {
-    return await billModel.create(insertObj);
+  addbillUserById: async (query, insertBill ) => {
+    return await billModel.create(query, insertBill);
       
   },
 

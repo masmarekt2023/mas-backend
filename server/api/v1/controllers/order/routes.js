@@ -5,7 +5,7 @@ const upload = require("../../../../helper/uploadHandler");
 
 module.exports = Express.Router()
 
-  .get("/allListOrder", controller.allListOrder)
+  /*.get("/allListOrder", controller.allListOrder)*/
 
   .use(auth.verifyToken)
   .get("/order/:_id", controller.viewOrder)

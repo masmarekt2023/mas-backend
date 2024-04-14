@@ -483,7 +483,7 @@ class orderController {
    *         description: Returns success message
    */
 
-  async allListOrder(req, res, next) {
+  /*async allListOrder(req, res, next) {
     try {
       let dataResults = await orderList({
         status: { $ne: status.DELETE },
@@ -496,7 +496,7 @@ class orderController {
     } catch (error) {
       return next(error);
     }
-  }
+  }*/
 
   /**
    * @swagger
