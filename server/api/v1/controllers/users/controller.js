@@ -9,6 +9,7 @@ const bcrypt = require("bcryptjs");
 const responseMessage = require("../../../../../assets/responseMessage");
 const {userServices} = require("../../services/user");
 const {subscriptionServices} = require("../../services/subscription");
+const {buyingServices} = require("../../services/buying");
 const {bundleServices} = require("../../services/bundle");
 const {nftServices} = require("../../services/nft");
 const {nft1Services} = require("../../services/nft1");
@@ -54,6 +55,10 @@ const {
     subscriptionWithPaginate,
     subscriptionWithPaginate1
 } = subscriptionServices;
+const {
+    createbuying,
+    
+} = buyingServices;
 const {findBundle} = bundleServices;
 const {
     findNft,
@@ -1412,7 +1417,7 @@ class userController {
             myDate = new Date(myDate);
             myDate.setDate(myDate.getDate() + parseInt(duration));
             let validTillDate = myDate.toISOString();
-            await createSubscription({
+            await createbuying({
                 title: Item.itemTitle,
                 name: Item.itemName,
                 description: Item.details,
