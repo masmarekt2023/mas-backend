@@ -15,7 +15,7 @@ const {
   createNft,
   findNft,
   updateNft,
-  findNft1,
+  
   nftListWithoutShared,
   nftListWithAggregate,
   listAllNft,
@@ -27,6 +27,7 @@ const {
 const {
   createNFT1,
   listAllNFT1,
+  findNFT1,
   myNFT1PaginateSearch
 } = nft1Services;
 const { createNotification } = notificationServices;
@@ -585,6 +586,29 @@ class nftController {
         throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
       }*/
       const data = await findNft({_id: _id});
+      return res.json(
+        new response(data, responseMessage.DETAILS_FETCHED)
+      );
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async viewNFT1(req, res, next) {
+    const validationSchema = {
+      _id: Joi.string().required(),
+    };
+    try {
+      const { _id } = await Joi.validate(req.params, validationSchema);
+      /*let userResult = await findUser({ _id: req.userId });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }*/
+      /*var nftResult = await findNftWithPopulateDetails(_id, userResult._id);
+      if (nftResult.length == 0) {
+        throw apiError.conflict(responseMessage.DATA_NOT_FOUND);
+      }*/
+      const data = await findNFT1({_id: _id});
       return res.json(
         new response(data, responseMessage.DETAILS_FETCHED)
       );

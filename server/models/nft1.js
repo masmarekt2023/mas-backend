@@ -38,9 +38,12 @@ const schemaDefination = new Schema(
         ref: "user",
       },
     ],
-    itemId: {
-      type: Number,
-    },
+    itemId: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "nft1",
+      },
+    ],
     itemTitle: {
       type: String,
     },

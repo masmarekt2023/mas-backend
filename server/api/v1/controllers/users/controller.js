@@ -51,7 +51,8 @@ const {
     updateSubscription,
     subscriptionList,
     subscriptionListWithAggregate,
-    subscriptionWithPaginate
+    subscriptionWithPaginate,
+    subscriptionWithPaginate1
 } = subscriptionServices;
 const {findBundle} = bundleServices;
 const {
@@ -1978,6 +1979,42 @@ class userController {
         }
     }
 
+    async mypurchases(req, res, next) {
+        const validationSchema = {
+            limit: Joi.number().optional(),
+            page: Joi.number().optional(),
+        };
+        try {
+            const validateBody = await Joi.validate(req.query, validationSchema);
+            let userResult = await findUser({_id: req.userId});
+            if (!userResult) {
+                return apiError.notFound(responseMessage.USER_NOT_FOUND);
+            }
+            const result = await subscriptionWithPaginate1(validateBody, userResult._id);
+            return res.json(new response(result, responseMessage.DATA_FOUND));
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    async mysales(req, res, next) {
+        const validationSchema = {
+            limit: Joi.number().optional(),
+            page: Joi.number().optional(),
+        };
+        try {
+            const validateBody = await Joi.validate(req.query, validationSchema);
+            let userResult = await findUser({_id: req.userId});
+            if (!userResult) {
+                return apiError.notFound(responseMessage.USER_NOT_FOUND);
+            }
+            const result = await subscriptionWithPaginate1(validateBody, userResult._id);
+            return res.json(new response(result, responseMessage.DATA_FOUND));
+        } catch (error) {
+            return next(error);
+        }
+    }
+
     /**
      * @swagger
      * /user/followers:
@@ -2029,6 +2066,7 @@ class userController {
             return next(error);
         }
     }
+
 
     /**
      * @swagger

@@ -9,6 +9,7 @@ module.exports = Express.Router()
     .get("/listAllNft1", controller.listAllNFT1)
     .get("/nftList", controller.allNftAuctionList)
     .get("/nft/:_id", controller.viewNFT)
+    .get("/nft1/:_id", controller.viewNFT1)
 
     .use(auth.verifyToken)
 

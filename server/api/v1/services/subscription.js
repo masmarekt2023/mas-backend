@@ -36,6 +36,18 @@ const subscriptionServices = {
     return await subscriptionModel.paginate(query, options);
   },
 
+  subscriptionWithPaginate1: async (validatedBody, userId) => {
+    let query = { userId: userId, subscriptionStatus: 'ACTIVE', status: "ACTIVE" }
+    const {page, limit} = validatedBody;
+    let options = {
+      page: page || 1,
+      limit: limit || 10,
+      sort: { createdAt: -1 },
+      populate: {path: 'nftId', populate: {path: 'userId'}}
+    };
+    return await subscriptionModel.paginate(query, options);
+  },
+
   subscriptionListWithAggregate: async (userId) => {
     let query = { userId: mongoose.Types.ObjectId(userId) };
     return await subscriptionModel.aggregate([

@@ -15,9 +15,7 @@ const nftServices = {
         "-ethAccount.privateKey -password -referralCode -email -permissions"
       );
   },
-  findNft1: async (query) => {
-    return await nftModel.findOne(query);
-  },
+  
 
   findUserNft: async (query) => {
     return await nftModel.find(query);
