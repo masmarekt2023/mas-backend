@@ -67,7 +67,7 @@ const {
 } = nftServices;
 const {
     findNFT1,
-    
+    findNFT11,
 } = nft1Services;
 
 const {
@@ -121,6 +121,7 @@ const { Canvas,ImageData } = canvas;
 const { createCanvas, loadImage } = require('canvas');
 const { image } = require('image-js');
 const { Readable } = require('readable-stream');
+const { ItemAssignmentList } = require("twilio/lib/rest/numbers/v2/regulatoryCompliance/bundle/itemAssignment");
 
 class userController {
     /**
@@ -1342,24 +1343,35 @@ class userController {
   }
 
   async order(req, res, next) {
+    console.log('Start processing PUT request to /user/order');
     const validationSchema = {
-      nft1Id: Joi.string().optional(),
+        nft1Id: Joi.string().required(),
     };
     try {
-        const {nft1Id} = await Joi.validate(req.params, validationSchema);
-        let userResult = await findUserData({_id: req.userId});
+        console.log('Validating request data:', req.body);
+        const {nft1Id} = await Joi.validate(req.body, validationSchema);
+        console.log('Validation successful:', nft1Id);
+        let userResult = await findUserData({userId: req.userId});
         if (!userResult) {
+            console.error('User not found');
             throw apiError.notFound(responseMessage.USER_NOT_FOUND);
         }
+        console.log('User found:', userResult._id);
+
+        console.log('Finding admin user');
         var adminResult = await findUser({userType: userType.ADMIN});
+        console.log('Finding NFT1 by ID:', nft1Id);
         let Item = await findNFT1({
             _id: nft1Id,
             status: {$ne: status.DELETE},
         });
         if (!Item) {
+            console.error('NFT not found');
             return apiError.notFound(responseMessage.NFT_NOT_FOUND);
         }
+        console.log('NFT1 found:', Item._id);
         let balance = Item.coinName.toLowerCase() + "Balance";
+        console.log(`Checking balance. Required: ${Item.donationAmount}, Available: ${userResult[balance]}`);
         if (userResult[balance] >= Item.donationAmount) {
             let CreatorUser = await findUser({
                 _id: Item.userId,
@@ -1416,18 +1428,18 @@ class userController {
             await createTransaction({
                 userId: userResult._id,
                 nft1Id: Item._id,
-                nft1UserId: Item.userId,
+                nftUserId: Item.userId,
                 toDonationUser: Item.userId,
-                amount: Item.donationAmount,
+                amount: ItemAssignmentList.donationAmount,
                 transactionType: "Donation",
                 transactionStatus: "SUCCESS",
                 adminCommission: commissionFee,
                 coinName: Item.coinName,
             });
             await createNotification({
-                title: `Item  buy Notification!`,
+                title: `Item buy Notification!`,
                 description: `Your item ${
-                    Itrm.bundleName
+                    Item.itemName
                 } has been buyed by ${
                     userResult.name
                         ? userResult.name
@@ -1436,9 +1448,9 @@ class userController {
                             : "a new user."
                 }.`,
                 userId: Item.userId,
-                nftId: Item._id,
-                notificationType: "Item_Buyed",
-                subscriberId: userResult._id,
+                nft1Id: Item._id,
+                notificationType: "Item_buy",
+                buyId: userResult._id,
             });
             Item.subscribers.push(userResult._id);
             await Item.save();
@@ -1468,16 +1480,16 @@ class userController {
             return res.json(
                 new response(
                     {
-                        buybed: "yes",
+                        buyed: "yes",
                         nb: Item.subscribers.length,
                     },
-                    responseMessage.SUBSCRIBED
+                    responseMessage.BUYED
                 )
             );
         } else {
             return res.json(
                 new response(
-                    {subscribed: "no"},
+                    {buyed: "no"},
                     responseMessage.INSUFFICIENT_BALANCE(Item.coinName),
                     400
                 )

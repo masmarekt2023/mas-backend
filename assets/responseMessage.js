@@ -59,7 +59,7 @@ module.exports = {
   ORDER_EXIST: "This order is already placed.",
   ORDER_NOT_FOUND: "Order not found.",
   BID_ADDED: "Bid added successfully.",
-  SUBSCRIBED: "You have successfully subscribed.",
+  SUBSCRIBED: "You have successfully buyed.",
   UNSUBSCRIBED: "You have successfully unsubscribed.",
   MODERATOR_ADDED: "Moderator added successfully.",
   SHARED_AUDIENCE: "Successfully shared with audience.",
