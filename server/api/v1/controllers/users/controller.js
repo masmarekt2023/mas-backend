@@ -1353,19 +1353,15 @@ class userController {
         nft1Id: Joi.string().required(),
     };
     try {
-        console.log('Validating request data:', req.body);
         const {nft1Id} = await Joi.validate(req.body, validationSchema);
-        console.log('Validation successful:', nft1Id);
         let userResult = await findUserData({userId: req.userId});
         if (!userResult) {
             console.error('User not found');
             throw apiError.notFound(responseMessage.USER_NOT_FOUND);
         }
-        console.log('User found:', userResult._id);
-
+        
         console.log('Finding admin user');
         var adminResult = await findUser({userType: userType.ADMIN});
-        console.log('Finding NFT1 by ID:', nft1Id);
         let Item = await findNFT1({
             _id: nft1Id,
             status: {$ne: status.DELETE},
@@ -1374,14 +1370,17 @@ class userController {
             console.error('NFT not found');
             return apiError.notFound(responseMessage.NFT_NOT_FOUND);
         }
-        console.log('NFT1 found:', Item._id);
+        
         let balance = Item.coinName.toLowerCase() + "Balance";
-        console.log(`Checking balance. Required: ${Item.donationAmount}, Available: ${userResult[balance]}`);
+        console.log(`Price Required: ${Item.donationAmount},balance Available: ${userResult[balance]}`);
         if (userResult[balance] >= Item.donationAmount) {
             let CreatorUser = await findUser({
                 _id: Item.userId,
                 status: {$ne: status.DELETE},
             });
+            console.log('item:', nft1Id);
+            console.log('buyer:', userResult._id);
+        
 
             let updateQuery = {};
             let updateQuery1 = {$addToSet: {buyNft1: Item._id}};
@@ -1391,12 +1390,19 @@ class userController {
                 userEarn = {};
             var donationAmount = Item.donationAmount;
             var commissionResult = await sortFee({
-                masHeld: {$lte: CreatorUser.masBalance},
+                masHeld: {$lte: userResult[balance]},
                 status: status.ACTIVE,
             });
+            
+            
             var commissionFee =
-                Number(donationAmount) * (commissionResult ? commissionResult.contentCreatorFee : 1 / 100);
-            var nft1DonationAmount = Number(donationAmount) - commissionFee;
+            Number(donationAmount) * (commissionResult ? commissionResult.contentCreatorFee : 1 / 100)/100;
+            var nft1DonationAmount = Number(donationAmount) + commissionFee;
+
+            console.log('price of item:', donationAmount);
+            console.log('fee:',commissionFee);
+            console.log('fee of platform:', ((commissionResult ? commissionResult.contentCreatorFee:1/100)/100));
+            console.log('price of item before fee:', nft1DonationAmount);
 
             updateQuery.$inc = {[balance]: Number(nft1DonationAmount)};
             updateQuery1.$inc = {[balance]: -Number(donationAmount)};
@@ -1409,8 +1415,8 @@ class userController {
                 updateQuery.$addToSet = {supporters: Item.userId};
             }
 
-            await updateUser({_id: CreatorUser._id}, updateQuery);
-            await updateUser({_id: userResult._id}, updateQuery1);
+            await updateUser({_id: ( CreatorUser._id)}, updateQuery);
+            await updateUser({_id: (userResult._id)}, updateQuery1);
 
             let duration = Item.duration.split(" ")[0];
             var myDate = new Date().toISOString();
@@ -1433,14 +1439,21 @@ class userController {
             await createTransaction({
                 userId: userResult._id,
                 nft1Id: Item._id,
-                nftUserId: Item.userId,
-                toDonationUser: Item.userId,
-                amount: ItemAssignmentList.donationAmount,
-                transactionType: "Donation",
+                toDonationUser: CreatorUser._id,
+                amount: donationAmount,
+                transactionType: "buying",
                 transactionStatus: "SUCCESS",
                 adminCommission: commissionFee,
                 coinName: Item.coinName,
             });
+            console.log('item:', Item._id);
+            console.log('buyer:', userResult._id);
+            console.log('seller:', CreatorUser._id);
+            console.log('coin:',Item.coinName);
+            console.log('price:',donationAmount);
+            console.log('fee:',commissionFee);
+            
+
             await createNotification({
                 title: `Item buy Notification!`,
                 description: `Your item ${
@@ -1464,7 +1477,7 @@ class userController {
                 status: status.ACTIVE,
             });
             var userEarningResult = await findEarning({
-                userId: CreatorUser._id,
+                userId: Item._id,
                 status: status.ACTIVE,
             });
             if (!adminEarningResult) {
@@ -1475,7 +1488,7 @@ class userController {
             }
 
             if (!userEarningResult) {
-                userEarn.userId = CreatorUser._id;
+                userEarn.userId = (Item._id);
                 await createEarning(userEarn);
             } else {
                 await updateEarning({_id: userEarningResult._id}, earningObj);

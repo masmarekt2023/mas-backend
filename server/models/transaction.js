@@ -19,9 +19,9 @@ const schemaDefination = new Schema(
       type: Schema.Types.ObjectId,
       ref: "user",
     },
-    nftId: {
+    nft1Id: {
       type: Schema.Types.ObjectId,
-      ref: "nft",
+      ref: "nft1",
     },
     nftUserId: {
       type: Schema.Types.ObjectId,
