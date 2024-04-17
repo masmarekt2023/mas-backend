@@ -1351,17 +1351,24 @@ class userController {
     console.log('Start processing PUT request to /user/order');
     const validationSchema = {
         nft1Id: Joi.string().required(),
+        userBuyer: Joi.string().required(),
     };
     try {
         const {nft1Id} = await Joi.validate(req.body, validationSchema);
-        let userResult = await findUserData({userId: req.userId});
+        const {userBuyer} = await Joi.validate(req.body, validationSchema);
+        let userResult = await findUser({
+            _id: userBuyer,
+            status: {$ne: status.DELETE}
+        })
         if (!userResult) {
             console.error('User not found');
             throw apiError.notFound(responseMessage.USER_NOT_FOUND);
         }
         
-        console.log('Finding admin user');
+        
         var adminResult = await findUser({userType: userType.ADMIN});
+        console.log('Finding admin:',adminResult._id);
+        console.log('Finding user:',userResult._id);
         let Item = await findNFT1({
             _id: nft1Id,
             status: {$ne: status.DELETE},
@@ -1383,7 +1390,7 @@ class userController {
         
 
             let updateQuery = {};
-            let updateQuery1 = {$addToSet: {buyNft1: Item._id}};
+            let updateQuery1 = {$addToSet: {subscribeNft: Item._id}};
             var commissionObj = {},
                 earningObj = {},
                 firstCommission = {},
@@ -1397,7 +1404,7 @@ class userController {
             
             var commissionFee =
             Number(donationAmount) * (commissionResult ? commissionResult.contentCreatorFee : 1 / 100)/100;
-            var nft1DonationAmount = Number(donationAmount) + commissionFee;
+            var nft1DonationAmount = Number(donationAmount) - commissionFee;
 
             console.log('price of item:', donationAmount);
             console.log('fee:',commissionFee);
@@ -1417,6 +1424,7 @@ class userController {
 
             await updateUser({_id: ( CreatorUser._id)}, updateQuery);
             await updateUser({_id: (userResult._id)}, updateQuery1);
+            console.log(`Balance updated for user ${userResult._id}`);
 
             let duration = Item.duration.split(" ")[0];
             var myDate = new Date().toISOString();
@@ -1455,9 +1463,10 @@ class userController {
             
 
             await createNotification({
-                title: `Item buy Notification!`,
+                title: `item buying Notification!`,
                 description: `Your item ${
-                    Item.itemName
+                    Item.itemNameName
+                    
                 } has been buyed by ${
                     userResult.name
                         ? userResult.name
@@ -1466,9 +1475,9 @@ class userController {
                             : "a new user."
                 }.`,
                 userId: Item.userId,
-                nft1Id: Item._id,
-                notificationType: "Item_buy",
-                buyId: userResult._id,
+                nftId: Item._id,
+                notificationType: "ITEM_BUYING",
+                subscriberId: userResult._id,
             });
             Item.subscribers.push(userResult._id);
             await Item.save();
@@ -1477,7 +1486,7 @@ class userController {
                 status: status.ACTIVE,
             });
             var userEarningResult = await findEarning({
-                userId: Item._id,
+                userId: CreatorUser._id,
                 status: status.ACTIVE,
             });
             if (!adminEarningResult) {
@@ -1488,26 +1497,27 @@ class userController {
             }
 
             if (!userEarningResult) {
-                userEarn.userId = (Item._id);
+                userEarn.userId = CreatorUser._id;
                 await createEarning(userEarn);
             } else {
                 await updateEarning({_id: userEarningResult._id}, earningObj);
             }
+            console.log('earn:',userEarningResult._id);
 
             addUserIntoFeed(Item._id, userResult._id);
             return res.json(
                 new response(
                     {
-                        buyed: "yes",
+                        subscribed: "yes",
                         nb: Item.subscribers.length,
                     },
-                    responseMessage.BUYED
+                    responseMessage.SUBSCRIBED
                 )
             );
         } else {
             return res.json(
                 new response(
-                    {buyed: "no"},
+                    {subscribed: "no"},
                     responseMessage.INSUFFICIENT_BALANCE(Item.coinName),
                     400
                 )
@@ -1516,9 +1526,7 @@ class userController {
     } catch (error) {
         return next(error);
     }
-    
-    
-  }
+}
 
     async deleteProfile(req, res, next) {
         try {
