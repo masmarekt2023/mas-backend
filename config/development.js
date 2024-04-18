@@ -45,7 +45,7 @@ module.exports = {
 
   usdtContractAddress: "0x55d398326f99059fF775485246999027B3197955",
   busdContractAddress: "0xc5f0f7b66764f6ec8c8dff7ba683102295e16409",
-  masContractAddress: "0xC1C7204bDe6c926e68376a24b24b8cde2F19799c",
+  masContractAddress: "0x7Eaa8041E9fD0F14b7135c990afe24a5D7c81252",
 
   //rpc: "https://tiniest-wiser-energy.bsc-testnet.discover.quiknode.pro/e169b1e3a013232774392518e881c620ef13c382/",
   //rpcws: "wss://tiniest-wiser-energy.bsc-testnet.discover.quiknode.pro/e169b1e3a013232774392518e881c620ef13c382/",

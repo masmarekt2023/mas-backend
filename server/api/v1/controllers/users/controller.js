@@ -9,6 +9,8 @@ const bcrypt = require("bcryptjs");
 const responseMessage = require("../../../../../assets/responseMessage");
 const {userServices} = require("../../services/user");
 const {subscriptionServices} = require("../../services/subscription");
+const {salesServices} = require("../../services/sales");
+const {purchasesServices} = require("../../services/purchases");
 const {buyingServices} = require("../../services/buying");
 const {bundleServices} = require("../../services/bundle");
 const {nftServices} = require("../../services/nft");
@@ -56,8 +58,15 @@ const {
     subscriptionWithPaginate1
 } = subscriptionServices;
 const {
-    createbuying,
-    
+    salesWithPaginate,
+    createsales
+    } = salesServices;
+const {
+    purchasesWithPaginate,
+    createpurchases
+    } = purchasesServices;    
+const {
+    createbuying,   
 } = buyingServices;
 const {findBundle} = bundleServices;
 const {
@@ -1444,6 +1453,32 @@ class userController {
                 toAddress: CreatorUser.ethAccount.address,
                 amount: donationAmount,
             });
+            await createsales({
+                title: Item.itemTitle,
+                name: Item.itemName,
+                description: Item.details,
+                validTillDate: validTillDate,
+                duration: duration,
+                masPrice: Item.donationAmount,
+                nft1Id: Item._id,
+                userId: CreatorUser._id,
+                fromAddress: userResult.ethAccount.address,
+                toAddress: CreatorUser.ethAccount.address,
+                amount: donationAmount,
+            });
+            await createpurchases({
+                title: Item.itemTitle,
+                name: Item.itemName,
+                description: Item.details,
+                validTillDate: validTillDate,
+                duration: duration,
+                masPrice: Item.donationAmount,
+                nft1Id: Item._id,
+                userId: userResult._id,
+                fromAddress: userResult.ethAccount.address,
+                toAddress: CreatorUser.ethAccount.address,
+                amount: donationAmount,
+            });
             await createTransaction({
                 userId: userResult._id,
                 nft1Id: Item._id,
@@ -2028,7 +2063,7 @@ class userController {
             if (!userResult) {
                 return apiError.notFound(responseMessage.USER_NOT_FOUND);
             }
-            const result = await subscriptionWithPaginate1(validateBody, userResult._id);
+            const result = await purchasesWithPaginate(validateBody, userResult._id);
             return res.json(new response(result, responseMessage.DATA_FOUND));
         } catch (error) {
             return next(error);
@@ -2046,7 +2081,7 @@ class userController {
             if (!userResult) {
                 return apiError.notFound(responseMessage.USER_NOT_FOUND);
             }
-            const result = await subscriptionWithPaginate1(validateBody, userResult._id);
+            const result = await salesWithPaginate(validateBody, userResult._id);
             return res.json(new response(result, responseMessage.DATA_FOUND));
         } catch (error) {
             return next(error);
