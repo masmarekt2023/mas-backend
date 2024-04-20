@@ -1309,6 +1309,7 @@ class userController {
         postcode: Joi.string().required(),
         address1: Joi.string().required(),
         address2: Joi.string().required(),
+        serialNumber:Joi.string().required(),
     }).unknown(false);
     console.log('Received PUT request to /user/bill with data:', req.body);
 
@@ -1328,7 +1329,7 @@ class userController {
         const validatedBody = await validateBody(req.body, validationSchema);
 
         // Destructure validated data
-        const { name, surname, email, phoneNumber,postcode, address1, address2 } = validatedBody;
+        const { name, surname, email, phoneNumber,postcode, address1, address2, serialNumber } = validatedBody;
 
 
         // Preparing the bill object
@@ -1340,6 +1341,7 @@ class userController {
             postcode,
             address1,
             address2,
+            serialNumber,
         };
 
         // Function to add bill - make sure this function is defined and imported properly
