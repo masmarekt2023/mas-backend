@@ -82,6 +82,7 @@ const {
 const {
     findNFT1,
     findNFT11,
+    updateNFT1
 } = nft1Services;
 
 const {
@@ -2419,6 +2420,49 @@ class userController {
         }
     }
 
+    async likeDislikeNft1(req, res, next) {
+        const validationSchema = {
+            nft1Id: Joi.string().required(),
+        };
+        var updated;
+        try {
+            const {nft1Id} = await Joi.validate(req.params, validationSchema);
+            let userResult = await findUser({_id: req.userId});
+            if (!userResult) {
+                return apiError.notFound(responseMessage.USER_NOT_FOUND);
+            }
+            let nft1Check = await findNFT1({
+                _id: nft1Id,
+                status: {$ne: status.DELETE},
+            });
+            if (!nft1Check) {
+                throw apiError.notFound(responseMessage.NFT_NOT_FOUND);
+            }
+            if (nft1Check.likesUsers.includes(userResult._id)) {
+                updated = await updateNFT1(
+                    {_id: nft1Check._id},
+                    {$pull: {likesUsers: userResult._id}, $inc: {likesCount: -1}}
+                );
+                await updateUser(
+                    {_id: userResult._id},
+                    {$pull: {likesNft1: nft1Check._id}}
+                );
+                return res.json(new response(updated, responseMessage.DISLIKE_BUNDLE));
+            }
+            updated = await updateNFT1(
+                {_id: nft1Check._id},
+                {$addToSet: {likesUsers: userResult._id}, $inc: {likesCount: 1}}
+            );
+            await updateUser(
+                {_id: userResult._id},
+                {$addToSet: {likesNft1: nft1Check._id}}
+            );
+            return res.json(new response(updated, responseMessage.LIKE_BUNDLE));
+        } catch (error) {
+            return next(error);
+        }
+    }
+
     async userNft(req, res, next) {
         const validationSchema = {
             userId: Joi.string().required(),
@@ -2974,7 +3018,7 @@ class userController {
      *         in: formData
      *         required: false
      *       - name: coinName
-     *         description: coinName ?? USDT || BUSD || MAS || WARE || WBTC || ETH || BNB
+     *         description: coinName ?? USDT || FDUSD || MAS || WARE || WBTC || ETH || BNB
      *         in: formData
      *         required: false
      *       - name: message
