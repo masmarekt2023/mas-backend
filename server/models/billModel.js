@@ -21,7 +21,8 @@ const billModel = new Schema(
     phoneNumber: { type: String },
     postcode: { type: String },
     address1: { type: String },
-    address2: { type: String }
+    address2: { type: String },
+    serialNumber: { type: String }
     
   },options);
 

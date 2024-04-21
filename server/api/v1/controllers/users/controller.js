@@ -162,6 +162,7 @@ class userController {
         };
         try {
             const {email} = await Joi.validate(req.body, validationSchema);
+            console.log(req.body);
             const verify = await Twilio.sendVerification(
                 email,
                 "email",
@@ -1514,8 +1515,9 @@ class userController {
                 userId: Item.userId,
                 nftId: Item._id,
                 notificationType: "ITEM_BUYING",
-                subscriberId: userResult._id,
+                buyerId: userResult._id,
             });
+           
             Item.subscribers.push(userResult._id);
             await Item.save();
             var adminEarningResult = await findEarning({
@@ -1537,24 +1539,24 @@ class userController {
                 userEarn.userId = CreatorUser._id;
                 await createEarning(userEarn);
             } else {
-                await updateEarning({_id: userEarningResult._id}, earningObj);
+                await updateEarning({_id: userEarningResult}, earningObj);
             }
-            console.log('earn:',userEarningResult._id);
+            console.log('earn:',userEarningResult);
 
             addUserIntoFeed(Item._id, userResult._id);
             return res.json(
                 new response(
                     {
-                        subscribed: "yes",
+                        buyed: "yes",
                         nb: Item.subscribers.length,
                     },
-                    responseMessage.SUBSCRIBED
+                    responseMessage.BUYED
                 )
             );
         } else {
             return res.json(
                 new response(
-                    {subscribed: "no"},
+                    {buyed: "no"},
                     responseMessage.INSUFFICIENT_BALANCE(Item.coinName),
                     400
                 )
