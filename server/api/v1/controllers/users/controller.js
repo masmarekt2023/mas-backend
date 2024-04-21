@@ -254,7 +254,7 @@ class userController {
                 masBalance: 0,
                 usdtBalance: 0,
                 bnbBalance: 0,
-                busdBalance: 0
+                fdusdBalance: 0
             };
 
             if (referralCode) {
@@ -881,12 +881,12 @@ class userController {
                     (el) => el.userId.toString() == user._id.toString()
                 );
                 if (index !== -1) {
-                    const {masBalance, busdBalance, usdtBalance, referralBalance} =
+                    const {masBalance, fdusdBalance, usdtBalance, referralBalance} =
                         earnings[index];
                     return {
                         ...user.toObject(),
                         masBalance,
-                        busdBalance,
+                        fdusdBalance,
                         usdtBalance,
                         referralBalance,
                     };
@@ -948,12 +948,12 @@ class userController {
                     (el) => el.userId.toString() == user._id.toString()
                 );
                 if (index !== -1) {
-                    const {masBalance, busdBalance, usdtBalance, referralBalance} =
+                    const {masBalance, fdusdBalance, usdtBalance, referralBalance} =
                         earnings[index];
                     return {
                         ...user.toObject(),
                         masBalance,
-                        busdBalance,
+                        fdusdBalance,
                         usdtBalance,
                         referralBalance,
                     };
@@ -2990,7 +2990,7 @@ class userController {
         const validationSchema = {
             userId: Joi.string().required(),
             amount: Joi.number().required().min(1),
-            coinName: Joi.string().valid("MAS", "BUSD", "USDT").required(),
+            coinName: Joi.string().valid("MAS", "FDUSD", "USDT").required(),
             message: Joi.string().optional().allow("").max(100),
         };
         const validate = Joi.validate(req.body, validationSchema);

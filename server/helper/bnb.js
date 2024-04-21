@@ -6,11 +6,11 @@ let web3 = new Web3(new Web3.providers.HttpProvider(config.get("rpc")));
 let web3Websocket = new Web3(new Web3.providers.WebsocketProvider(config.get("rpcws")));
 
 const masContractAddress = config.get("masContractAddress");
-const busdContractAddress = config.get("busdContractAddress");
+const fdusdContractAddress = config.get("fdusdContractAddress");
 const usdtContractAddress = config.get("usdtContractAddress");
 
 const mas = new tokenERC("MAS", masContractAddress, web3, web3Websocket);
-const busd = new tokenERC("BUSD", busdContractAddress, web3, web3Websocket);
+const fdusd = new tokenERC("fdusd", fdusdContractAddress, web3, web3Websocket);
 const usdt = new tokenERC("USDT", usdtContractAddress, web3, web3Websocket);
 
 async function gasFee(gasLimit = 21000) {
@@ -129,5 +129,5 @@ module.exports = {
   gasFee,
   mas,
   usdt,
-  busd,
+  fdusd,
 };

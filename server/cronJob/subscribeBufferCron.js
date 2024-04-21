@@ -65,8 +65,8 @@ let jobMain = new cronJob("*/10 * * * * *", async function () {
       if (getBufferResult[0].coin === "MAS") {
         updateQuery.$inc = { masBalance: Number(donationAmount) };
       }
-      if (getBufferResult[0].coin === "BUSD") {
-        updateQuery.$inc = { busdBalance: Number(donationAmount) };
+      if (getBufferResult[0].coin === "FDUSD") {
+        updateQuery.$inc = { fdusdBalance: Number(donationAmount) };
       }
     } else {
       if (getBufferResult[0].coin === "BNB") {
@@ -87,10 +87,10 @@ let jobMain = new cronJob("*/10 * * * * *", async function () {
           masBalance: Number(donationAmount),
         };
       }
-      if (getBufferResult[0].coin === "BUSD") {
+      if (getBufferResult[0].coin === "FDUSD") {
         updateQuery.$inc = {
           subscriberCount: 1,
-          busdBalance: Number(donationAmount),
+          fdusdBalance: Number(donationAmount),
         };
       }
     }
@@ -297,7 +297,7 @@ let jobMain = new cronJob("*/10 * * * * *", async function () {
             transObj
           );
           console.log(
-            "151== MAS && BUSD && BNB ====>>",
+            "151== MAS && FDUSD && BNB ====>>",
             transactionHash.data.Hash
           );
           sendNotification(

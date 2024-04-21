@@ -1320,17 +1320,17 @@ class adminController {
       const usdt = async () => {
         return await bnb.usdt.balance(adminResult.ethAccount.address);
       };
-      const busd = async () => {
-        return await bnb.busd.balance(adminResult.ethAccount.address);
+      const fdusd = async () => {
+        return await bnb.fdusd.balance(adminResult.ethAccount.address);
       };
-      const [masBalance, bnbBalance, usdtBalance, busdBalance] =
-        await Promise.all([mas(), _bnb(), usdt(), busd()]);
+      const [masBalance, bnbBalance, usdtBalance, fdusdBalance] =
+        await Promise.all([mas(), _bnb(), usdt(), fdusd()]);
 
       var obj = {
         masBalance,
         bnbBalance,
         usdtBalance,
-        busdBalance,
+        fdusdBalance,
       };
 
       return res.json(new response(obj, responseMessage.DATA_FOUND));
@@ -1418,7 +1418,7 @@ class adminController {
             masBalance: { $sum: "$masBalance" },
             bnbBalance: { $sum: "$bnbBalance" },
             usdtBalance: { $sum: "$usdtBalance" },
-            busdBalance: { $sum: "$busdBalance" },
+            fdusdBalance: { $sum: "$fdusdBalance" },
           },
         },
       ];

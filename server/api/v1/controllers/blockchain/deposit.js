@@ -14,7 +14,7 @@ class depositController {
     var addrPool = await userModel.find({userType:{$ne: 'Admin'}}).distinct("ethAccount.address");
     console.log(addrPool);
     await bnb.usdt.trackDeposits(addrPool, this.processTokenDeposit);
-    await bnb.busd.trackDeposits(addrPool, this.processTokenDeposit);
+    await bnb.fdusd.trackDeposits(addrPool, this.processTokenDeposit);
     await bnb.mas.trackDeposits(addrPool, this.processTokenDeposit);
   }
 

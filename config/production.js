@@ -47,7 +47,7 @@ module.exports = {
     //masContractAddress: "0x22C0Bf6De47fAE4349A15BCb5c77d4A6B562B318", // bsc testnet
 
     usdtContractAddress: "0x55d398326f99059fF775485246999027B3197955",
-    busdContractAddress: "0xe9e7cea3dedca5984780bafc599bd69add087d56",
+    fdusdContractAddress: "0xc5f0f7b66764f6ec8c8dff7ba683102295e16409",
     masContractAddress: "0xe6a18c271Ac1cd06a82C00245b6469cF99b851c7",
 
     //rpc: "https://tiniest-wiser-energy.bsc-testnet.discover.quiknode.pro/e169b1e3a013232774392518e881c620ef13c382/",
