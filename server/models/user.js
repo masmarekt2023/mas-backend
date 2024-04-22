@@ -54,7 +54,7 @@ const userModel = new Schema(
     masBalance: { type: Number, default: 0 },
     usdtBalance: { type: Number, default: 0 },
     bnbBalance: { type: Number, default: 0 },
-    busdBalance: { type: Number, default: 0 },
+    fdusdBalance: { type: Number, default: 0 },
     referralUserId: {
       type: Schema.Types.ObjectId,
       ref: "user",
