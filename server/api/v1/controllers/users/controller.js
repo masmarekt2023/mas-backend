@@ -1554,13 +1554,11 @@ class userController {
                 )
             );
         } else {
-            return res.json(
-                new response(
-                    {buyed: "no"},
-                    responseMessage.INSUFFICIENT_BALANCE(Item.coinName),
-                    400
-                )
-            );
+            console.error(`Insufficient balance for user ${userResult._id}. Required: ${Item.donationAmount}, Available: ${userResult[balance]}`);
+            return res.status(400).json({
+                success: false,
+                message: "Your balance is too low for this purchase. Please add funds to continue."
+            });
         }
     } catch (error) {
         return next(error);
