@@ -37,6 +37,7 @@ const {
   userList,
   listSubAdmin,
   usersFundAggregate,
+  allUser,
 } = userServices;
 const {
   createSubscription,
@@ -3952,6 +3953,31 @@ class adminController {
       const validatedBody = await Joi.validate(req.query, validationSchema);
       let data;
       var userResult = await findUser({
+        _id: req.userId,
+        userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
+      });
+      if (!userResult) {
+        return apiError.notFound(responseMessage.USER_NOT_FOUND);
+      }
+      data = await allTransactions(validatedBody);
+      return res.json(new response(data, responseMessage.DETAILS_FETCHED));
+    } catch (error) {
+      return next(error);
+    }
+  }
+
+  async transactionUsersList(req, res, next) {
+    const validationSchema = {
+      userId: Joi.string().optional(),
+      fromDate: Joi.string().optional(),
+      toDate: Joi.string().optional(),
+      page: Joi.number().optional(),
+      limit: Joi.number().optional(),
+    };
+    try {
+      const validatedBody = await Joi.validate(req.query, validationSchema);
+      let data;
+      var userResult = await allUser({
         _id: req.userId,
         userType: { $in: [userType.ADMIN, userType.SUB_ADMIN] },
       });
