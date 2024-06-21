@@ -1,7 +1,9 @@
 require("dotenv").config();
 module.exports = {
   port: 1865,
-  dpUrl: `mongodb+srv://mo61920:7bQmwaCoOJCDLjqc@mas2023.qshesn6.mongodb.net/dapps-data?retryWrites=true&w=majority`,
+  databaseHost: "localhost",
+  databasePort: "27017",
+  databaseName: "SuSu2024",
   jwtsecret: "CVD!S9Fm7$M#8a",
   /*nodemailer: {
     service: "Zoho",
