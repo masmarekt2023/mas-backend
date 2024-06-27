@@ -52,8 +52,8 @@ module.exports = {
   //rpc: "https://tiniest-wiser-energy.bsc-testnet.discover.quiknode.pro/e169b1e3a013232774392518e881c620ef13c382/",
   //rpcws: "wss://tiniest-wiser-energy.bsc-testnet.discover.quiknode.pro/e169b1e3a013232774392518e881c620ef13c382/",
 
-  rpc: "https://rpc.ankr.com/multichain/a6d3907b430bb7e477bc332b15b4eb709ad50b08a3af6060ee6e1d7aa1cd2721",
-  rpcws: "wss://rpc.ankr.com/multichain/a6d3907b430bb7e477bc332b15b4eb709ad50b08a3af6060ee6e1d7aa1cd2721",
+  rpc: "https://radial-bold-bird.bsc.quiknode.pro/ff50095c980d51b9f48a3c40ff66ed9374bfce10/",
+  rpcws: "wss://radial-bold-bird.bsc.quiknode.pro/ff50095c980d51b9f48a3c40ff66ed9374bfce10/",
 
 
   contractABI: [
