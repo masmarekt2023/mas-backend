@@ -52,8 +52,8 @@ module.exports = {
   //rpc: "https://tiniest-wiser-energy.bsc-testnet.discover.quiknode.pro/e169b1e3a013232774392518e881c620ef13c382/",
   //rpcws: "wss://tiniest-wiser-energy.bsc-testnet.discover.quiknode.pro/e169b1e3a013232774392518e881c620ef13c382/",
 
-  rpc: "https://cold-nameless-crater.bsc.discover.quiknode.pro/d4669858ede933d6642ec6309ba5089c338ead7c/",
-  rpcws: "wss://cold-nameless-crater.bsc.discover.quiknode.pro/d4669858ede933d6642ec6309ba5089c338ead7c/",
+  rpc: "https://rpc.ankr.com/multichain/a6d3907b430bb7e477bc332b15b4eb709ad50b08a3af6060ee6e1d7aa1cd2721",
+  rpcws: "wss://rpc.ankr.com/multichain/a6d3907b430bb7e477bc332b15b4eb709ad50b08a3af6060ee6e1d7aa1cd2721",
 
 
   contractABI: [
